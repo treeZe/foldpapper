@@ -10,8 +10,14 @@ import java.util.List;
 @ConfigurationProperties(prefix = "app")
 public record AppProperties(
         Storage storage,
-        List<String> allowedOrigins
+        List<String> allowedOrigins,
+        /** Кого сделать админом при старте (ADMIN_USERNAMES=anna,igor) — так появляется первый админ. */
+        List<String> adminUsernames
 ) {
+
+    public List<String> adminUsernames() {
+        return adminUsernames == null ? List.of() : adminUsernames;
+    }
 
     public record Storage(
             /** Каталог на диске, куда складываются загруженные файлы. */

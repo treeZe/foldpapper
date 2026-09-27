@@ -1,5 +1,6 @@
 package com.foldpapper.pin;
 
+import com.foldpapper.board.BoardRepository;
 import com.foldpapper.common.ApiException;
 import com.foldpapper.common.PageResponse;
 import com.foldpapper.pepper.PepperRepository;
@@ -59,15 +60,18 @@ public class PinService {
     private final PepperRepository pepperRepository;
     private final UserRepository userRepository;
     private final TagService tagService;
+    private final BoardRepository boardRepository;
 
     public PinService(PinRepository pinRepository,
                       PepperRepository pepperRepository,
                       UserRepository userRepository,
-                      TagService tagService) {
+                      TagService tagService,
+                      BoardRepository boardRepository) {
         this.pinRepository = pinRepository;
         this.pepperRepository = pepperRepository;
         this.userRepository = userRepository;
         this.tagService = tagService;
+        this.boardRepository = boardRepository;
     }
 
     @Transactional
@@ -107,7 +111,23 @@ public class PinService {
 
     @Transactional
     public void delete(UUID pinId, UUID userId) {
-        pinRepository.delete(requireOwned(pinId, userId));
+        requireOwned(pinId, userId);
+        deleteWithCounters(pinId);
+    }
+
+    /** Удаление любого пина — для модерации. */
+    @Transactional
+    public void deleteAsModerator(UUID pinId) {
+        if (!pinRepository.existsById(pinId)) {
+            throw ApiException.notFound("Пин");
+        }
+        deleteWithCounters(pinId);
+    }
+
+    private void deleteWithCounters(UUID pinId) {
+        boardRepository.decrementPinCountForPin(pinId);
+        // счётчик выше сделал clear() — удаляем по id, а не ранее загруженную сущность
+        pinRepository.deleteById(pinId);
     }
 
     @Transactional(readOnly = true)

@@ -2,6 +2,8 @@ package com.foldpapper.user;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -46,6 +48,17 @@ public class User {
     @Column(name = "avatar_url", length = 1024)
     private String avatarUrl;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private Role role = Role.USER;
+
+    /** Момент блокировки; null — пользователь активен. */
+    @Column(name = "banned_at")
+    private Instant bannedAt;
+
+    @Column(name = "ban_reason", length = 300)
+    private String banReason;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -53,6 +66,14 @@ public class User {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+    public boolean isBanned() {
+        return bannedAt != null;
+    }
+
+    public boolean isAdmin() {
+        return role == Role.ADMIN;
+    }
 
     @Override
     public boolean equals(Object other) {

@@ -86,6 +86,7 @@ public class UserService {
                 user.getAvatarUrl(),
                 user.getCreatedAt(),
                 stats,
+                user.getRole().name(),
                 followedByMe);
     }
 

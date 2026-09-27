@@ -59,6 +59,8 @@ public final class UserDtos {
             String avatarUrl,
             Instant createdAt,
             UserStats stats,
+            /** USER или ADMIN — фронтенду нужно, чтобы показать вход в админку. */
+            String role,
             /** Подписан ли на него текущий пользователь; null для гостя и для своего профиля. */
             Boolean followedByMe
     ) {

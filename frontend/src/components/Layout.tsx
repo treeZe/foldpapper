@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Link, NavLink, Outlet, ScrollRestoration, useLocation, useNavigate, useSearchParams } from 'react-router';
 import { useAuth } from '../auth/AuthContext';
 import { displayName } from '../lib/format';
-import { LogoutIcon, MoonIcon, PlusIcon, SearchIcon, SunIcon } from './Icons';
+import { LogoutIcon, MoonIcon, PlusIcon, SearchIcon, ShieldIcon, SunIcon } from './Icons';
 import { Avatar, Logo } from './ui';
 
 function useTheme() {
@@ -86,6 +86,11 @@ function UserMenu() {
             <Link to={`/u/${user.username}?tab=boards`}>Мои доски</Link>
             <Link to={`/u/${user.username}?tab=peppered`}>Мои перцы</Link>
             <Link to="/settings">Настройки</Link>
+            {user.role === 'ADMIN' && (
+              <Link to="/admin" className="user-menu__admin">
+                <ShieldIcon size={16} /> Админ-панель
+              </Link>
+            )}
             <button type="button" onClick={logout}>
               <LogoutIcon size={16} /> Выйти
             </button>

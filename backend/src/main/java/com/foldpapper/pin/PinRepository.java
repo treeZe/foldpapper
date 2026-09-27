@@ -8,6 +8,9 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -37,6 +40,11 @@ public interface PinRepository extends JpaRepository<Pin, UUID> {
                OR EXISTS (SELECT 1 FROM p.tags t WHERE t.name LIKE :pattern)
             """)
     Page<Pin> search(@Param("pattern") String pattern, Pageable pageable);
+
+    long countByCreatedAtAfter(Instant since);
+
+    @Query("SELECT p.author.id AS authorId, COUNT(p) AS count FROM Pin p WHERE p.author.id IN :authorIds GROUP BY p.author.id")
+    List<AuthorPinCount> countByAuthorIds(@Param("authorIds") Collection<UUID> authorIds);
 
     /** Лента подписок. */
     @EntityGraph(attributePaths = "author")
@@ -74,6 +82,12 @@ public interface PinRepository extends JpaRepository<Pin, UUID> {
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Pin p SET p.saveCount = p.saveCount - 1 WHERE p.id = :id AND p.saveCount > 0")
     int decrementSaveCount(@Param("id") UUID id);
+
+    interface AuthorPinCount {
+        UUID getAuthorId();
+
+        long getCount();
+    }
 
     interface PinCounters {
         int getPepperCount();

@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { setUnauthorizedHandler, tokenStore } from '../api/client';
 import { authApi, usersApi } from '../api/endpoints';
 import type { AuthResponse, User } from '../api/types';
+import { useToast } from '../components/Toast';
 
 interface AuthState {
   user: User | null;
@@ -18,6 +19,7 @@ const AuthContext = createContext<AuthState | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
+  const toast = useToast();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(() => tokenStore.get() !== null);
 
@@ -29,14 +31,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [queryClient]);
 
   useEffect(() => {
-    setUnauthorizedHandler(logout);
+    setUnauthorizedHandler((message) => {
+      logout();
+      toast(message === 'Аккаунт заблокирован' ? 'Ваш аккаунт заблокирован модератором' : 'Сессия истекла, войдите снова', 'error');
+    });
     if (!tokenStore.get()) return;
     usersApi
       .me()
       .then(setUser)
       .catch(() => tokenStore.clear())
       .finally(() => setLoading(false));
-  }, [logout]);
+  }, [logout, toast]);
 
   const accept = useCallback(
     (response: AuthResponse) => {

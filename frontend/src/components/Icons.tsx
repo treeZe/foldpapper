@@ -123,6 +123,19 @@ export const FlameIcon = (p: IconProps) => (
   </svg>
 );
 
+export const FlagIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M5 21V4M5 4h11l-2 4 2 4H5" />
+  </svg>
+);
+
+export const ShieldIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z" />
+    <path d="m9 12 2 2 4-4" />
+  </svg>
+);
+
 export const LogoutIcon = (p: IconProps) => (
   <svg {...base(p)}>
     <path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10" />

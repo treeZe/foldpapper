@@ -25,6 +25,10 @@
   --heat-4: #d8361f;
   --heat-5: #9f1430;
 
+  /* столбцы графиков админки; проверено валидатором палитры на фоне --card */
+  --chart-bar: #e03e2a;
+  --danger: #c0262d;
+
   --radius: 20px;
   --radius-sm: 12px;
   --shadow-sm: 0 1px 2px rgb(60 40 20 / 0.08), 0 2px 8px rgb(60 40 20 / 0.06);
@@ -51,6 +55,8 @@
   /* на тёмном фоне бордовый теряется — верх шкалы светлее */
   --heat-4: #ff4a2e;
   --heat-5: #ff3b6b;
+  --chart-bar: #f2553a;
+  --danger: #ff5c5c;
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
   --shadow: 0 2px 4px rgb(0 0 0 / 0.3), 0 16px 40px -10px rgb(0 0 0 / 0.6);
   --shadow-lg: 0 30px 80px -20px rgb(0 0 0 / 0.8);
@@ -1972,6 +1978,645 @@ textarea.input {
   color: #fff;
 }
 
+/* ----------------------------------------------------------------- admin */
+
+.admin {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 32px;
+  align-items: start;
+}
+
+.admin__side {
+  position: sticky;
+  top: 96px;
+  display: grid;
+  gap: 18px;
+}
+
+.admin__title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 6px;
+  color: var(--chili);
+}
+
+.admin__title div {
+  display: grid;
+  color: var(--ink);
+}
+
+.admin__title strong {
+  font-family: var(--font-display);
+  font-size: 16px;
+}
+
+.admin__title small {
+  font-size: 13px;
+}
+
+.admin__nav {
+  display: grid;
+  gap: 2px;
+}
+
+.admin__nav a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 11px 14px;
+  border-radius: 14px;
+  font-weight: 600;
+  color: var(--ink-2);
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+}
+
+.admin__nav a:hover {
+  background: var(--paper-2);
+  color: var(--ink);
+}
+
+.admin__nav a.active {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.admin__count {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--chili);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin__content {
+  min-width: 0;
+}
+
+.admin__head {
+  margin-bottom: 22px;
+}
+
+.admin__head h1 {
+  font-size: clamp(26px, 3vw, 36px);
+  margin-bottom: 6px;
+}
+
+.admin__section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 36px 0 14px;
+}
+
+.admin__section-head h2 {
+  font-size: 20px;
+}
+
+.is-refetching {
+  opacity: 0.55;
+  transition: opacity 0.2s;
+}
+
+.load-more {
+  display: flex;
+  justify-content: center;
+  padding: 24px 0 0;
+}
+
+/* KPI: подпись, значение (sans, пропорциональные цифры), пояснение */
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.stat-tile {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  padding: 18px 20px;
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-tile__label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.stat-tile__value {
+  font-family: var(--font-body);
+  font-size: 34px;
+  font-weight: 650;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.stat-tile__note {
+  font-size: 13px;
+  color: var(--ink-3);
+}
+
+.stat-tile__alert {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ink-2);
+  font-weight: 600;
+}
+
+.stat-tile__alert svg {
+  color: var(--chili);
+}
+
+.stat-tile__link {
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--chili);
+}
+
+/* графики активности — small multiples, по карточке на показатель */
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+}
+
+.activity-chart {
+  margin: 0;
+  padding: 16px 18px 12px;
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+}
+
+.activity-chart figcaption {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 15px;
+}
+
+.activity-chart figcaption .muted {
+  font-size: 13px;
+}
+
+.activity-chart__plot {
+  position: relative;
+}
+
+.activity-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.activity-chart__grid,
+.activity-chart__axis {
+  stroke: var(--line);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.activity-chart__tick {
+  fill: var(--ink-3);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.activity-chart__value {
+  fill: var(--ink-2);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.activity-chart__fill {
+  fill: var(--chart-bar);
+  transition: opacity 0.15s;
+}
+
+.activity-chart__bar {
+  cursor: default;
+  outline: none;
+}
+
+.activity-chart__bar.is-active .activity-chart__fill {
+  opacity: 0.75;
+}
+
+.activity-chart__bar:focus-visible rect {
+  stroke: var(--focus);
+  stroke-width: 2;
+}
+
+.activity-chart__tooltip {
+  position: absolute;
+  top: -6px;
+  z-index: 2;
+  display: grid;
+  justify-items: start;
+  gap: 1px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 12px;
+  line-height: 1.3;
+  white-space: nowrap;
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+  box-shadow: var(--shadow);
+}
+
+.activity-chart__tooltip strong {
+  font-size: 16px;
+}
+
+.activity-chart__tooltip small {
+  opacity: 0.7;
+}
+
+/* таблицы */
+.table-wrap {
+  overflow-x: auto;
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.data-table th {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: left;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent);
+  vertical-align: middle;
+}
+
+.data-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.data-table tbody tr:hover {
+  background: color-mix(in srgb, var(--paper-2) 50%, transparent);
+}
+
+.data-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.data-table tr.is-banned .user-cell {
+  opacity: 0.6;
+}
+
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 180px;
+}
+
+.user-cell span {
+  display: grid;
+}
+
+.user-cell:hover strong {
+  color: var(--chili);
+}
+
+.user-email {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-reason {
+  display: block;
+  max-width: 200px;
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+.row-actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.row-actions .button + .button {
+  margin-left: 6px;
+}
+
+/* бейджи статусов: всегда с текстом, не только цвет */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--paper-2);
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.badge--admin {
+  background: color-mix(in srgb, var(--stem) 16%, transparent);
+  color: var(--stem);
+}
+
+.badge--danger {
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  color: var(--danger);
+}
+
+.badge--warn {
+  background: color-mix(in srgb, var(--heat-2) 18%, transparent);
+  color: var(--ink);
+}
+
+.profile-head .badge {
+  margin-top: -4px;
+}
+
+.button--danger-solid {
+  --bg: var(--danger);
+  --fg: #fff;
+}
+
+.button--danger-solid:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.search--inline {
+  flex: 0 1 340px;
+  height: 44px;
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+}
+
+.user-menu__panel > .user-menu__admin {
+  color: var(--stem);
+  font-weight: 650;
+}
+
+/* жалобы */
+.report-list {
+  display: grid;
+  gap: 12px;
+}
+
+.report-card {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) auto;
+  gap: 18px;
+  padding: 16px;
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+}
+
+.report-card__thumb {
+  position: relative;
+  align-self: start;
+}
+
+.report-card__thumb img {
+  width: 96px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 14px;
+  background: var(--paper-2);
+}
+
+.report-card__gone {
+  position: absolute;
+  inset: auto 6px 6px;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: rgb(0 0 0 / 0.7);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 650;
+  text-align: center;
+}
+
+.report-card__thumb:has(.report-card__gone) img {
+  filter: grayscale(1) opacity(0.6);
+}
+
+.report-card__body {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  min-width: 0;
+}
+
+.report-card__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.report-card__top .chip {
+  padding: 3px 10px;
+  font-size: 12px;
+}
+
+.report-card h3 {
+  font-family: var(--font-body);
+  font-size: 17px;
+  font-weight: 650;
+}
+
+.report-card h3 a:hover {
+  color: var(--chili);
+}
+
+.report-card p {
+  font-size: 14px;
+}
+
+.report-card__comment {
+  margin: 2px 0;
+  padding: 8px 12px;
+  border-left: 3px solid var(--line);
+  border-radius: 0 10px 10px 0;
+  background: var(--paper);
+  color: var(--ink-2);
+  font-size: 14px;
+}
+
+.report-card__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: var(--ink-2);
+}
+
+.report-card p a,
+.report-card__meta a {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.report-card__actions {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+
+/* пины в админке */
+.admin-pin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.admin-pin {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-pin__thumb {
+  position: relative;
+}
+
+.admin-pin__thumb img {
+  width: 64px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 12px;
+  background: var(--paper-2);
+}
+
+.admin-pin__flag {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border: 2px solid var(--card);
+  border-radius: 999px;
+  background: var(--chili);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.admin-pin__body {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  font-size: 14px;
+}
+
+.admin-pin__body strong,
+.admin-pin__body a {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-pin__body a:hover {
+  color: var(--chili);
+}
+
+.admin-pin__stats {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+
+/* форма жалобы */
+.reason-list {
+  display: grid;
+  gap: 6px;
+}
+
+.reason {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    background-color 0.2s;
+}
+
+.reason:hover {
+  border-color: var(--ink-3);
+}
+
+.reason.is-selected {
+  border-color: var(--chili);
+  background: var(--chili-soft);
+}
+
+.reason input {
+  accent-color: var(--chili);
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.reason span {
+  display: grid;
+}
+
+.reason small {
+  font-size: 13px;
+}
+
 /* ------------------------------------------------------------ animations */
 
 @keyframes fade {
@@ -2053,8 +2698,36 @@ textarea.input {
 @media (max-width: 900px) {
   .hero,
   .pin-detail,
-  .create {
+  .create,
+  .admin {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin__side {
+    position: static;
+  }
+
+  .admin__nav {
+    display: flex;
+    overflow-x: auto;
+  }
+
+  .admin__nav a {
+    flex: none;
+  }
+
+  .report-card {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+
+  .report-card__thumb img {
+    width: 72px;
+    height: 90px;
+  }
+
+  .report-card__actions {
+    grid-column: 1 / -1;
+    display: flex;
   }
 
   .hero__level:nth-child(even) {

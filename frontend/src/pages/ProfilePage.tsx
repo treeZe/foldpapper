@@ -5,7 +5,7 @@ import { usersApi } from '../api/endpoints';
 import { useAuth } from '../auth/AuthContext';
 import { BoardCard, BoardFormModal } from '../components/BoardCard';
 import { FollowButton, profileQuery } from '../components/FollowButton';
-import { PlusIcon } from '../components/Icons';
+import { PlusIcon, ShieldIcon } from '../components/Icons';
 import { PinGrid } from '../components/PinGrid';
 import { Tabs } from '../components/Tabs';
 import { Avatar, EmptyState, ErrorState, Spinner } from '../components/ui';
@@ -62,6 +62,11 @@ export function ProfilePage() {
           <Avatar user={person} size={112} />
         </div>
         <h1>{displayName(person)}</h1>
+        {person.role === 'ADMIN' && (
+          <span className="badge badge--admin">
+            <ShieldIcon size={14} /> Модератор
+          </span>
+        )}
         <p className="muted">
           @{person.username} · с нами с {formatDate(person.createdAt)}
         </p>

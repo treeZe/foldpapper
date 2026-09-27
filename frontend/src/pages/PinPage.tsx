@@ -7,9 +7,10 @@ import { dropPinEverywhere, patchPinEverywhere } from '../api/cache';
 import type { Pin } from '../api/types';
 import { useAuth } from '../auth/AuthContext';
 import { FollowButton } from '../components/FollowButton';
-import { ArrowLeftIcon, BookmarkIcon, EditIcon, LinkIcon, PepperIcon, TrashIcon } from '../components/Icons';
+import { ArrowLeftIcon, BookmarkIcon, EditIcon, FlagIcon, LinkIcon, PepperIcon, TrashIcon } from '../components/Icons';
 import { PepperMeter } from '../components/PepperMeter';
 import { PinGrid } from '../components/PinGrid';
+import { ReportModal } from '../components/ReportModal';
 import { SaveToBoardModal } from '../components/SaveToBoardModal';
 import { useToast } from '../components/Toast';
 import { Avatar, ErrorState, Field, Modal, Spinner } from '../components/ui';
@@ -76,6 +77,7 @@ export function PinPage() {
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [reporting, setReporting] = useState(false);
 
   const query = useQuery({ queryKey: ['pin', id], queryFn: () => pinsApi.get(id) });
 
@@ -136,6 +138,17 @@ export function PinPage() {
                     <TrashIcon />
                   </button>
                 </>
+              )}
+              {user && !isOwner && (
+                <button
+                  type="button"
+                  className="icon-button"
+                  onClick={() => setReporting(true)}
+                  title="Пожаловаться"
+                  aria-label="Пожаловаться"
+                >
+                  <FlagIcon />
+                </button>
               )}
             </div>
             {user ? (
@@ -222,6 +235,7 @@ export function PinPage() {
 
       {saving && <SaveToBoardModal pin={pin} onClose={() => setSaving(false)} />}
       {editing && <EditPinModal pin={pin} onClose={() => setEditing(false)} />}
+      {reporting && <ReportModal pinId={pin.id} onClose={() => setReporting(false)} />}
     </div>
   );
 }

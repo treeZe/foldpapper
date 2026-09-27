@@ -14,10 +14,13 @@ export interface UserStats {
   following: number;
 }
 
+export type Role = 'USER' | 'ADMIN';
+
 export interface User extends UserSummary {
   bio?: string;
   createdAt: string;
   stats: UserStats;
+  role: Role;
   /** null/отсутствует для гостя и своего профиля */
   followedByMe?: boolean;
 }
@@ -113,4 +116,74 @@ export interface BoardInput {
   description?: string;
   isPrivate?: boolean;
   coverPinId?: string;
+}
+
+// ------------------------------------------------------------------ жалобы
+
+export type ReportReason = 'SPAM' | 'NSFW' | 'OFFENSIVE' | 'COPYRIGHT' | 'OTHER';
+export type ReportStatus = 'OPEN' | 'RESOLVED' | 'DISMISSED';
+
+// ------------------------------------------------------------------ админка
+
+export interface DayActivity {
+  /** ISO-дата YYYY-MM-DD в часовом поясе админа */
+  day: string;
+  users: number;
+  pins: number;
+  peppers: number;
+}
+
+export interface AdminStats {
+  users: number;
+  admins: number;
+  bannedUsers: number;
+  pins: number;
+  boards: number;
+  peppers: number;
+  openReports: number;
+  newUsersWeek: number;
+  newPinsWeek: number;
+  activity: DayActivity[];
+}
+
+export interface AdminUser {
+  id: string;
+  username: string;
+  displayName?: string;
+  email: string;
+  avatarUrl?: string;
+  role: Role;
+  bannedAt?: string;
+  banReason?: string;
+  pins: number;
+  createdAt: string;
+}
+
+export interface AdminPin {
+  id: string;
+  title?: string;
+  imageUrl: string;
+  imageWidth?: number;
+  imageHeight?: number;
+  author: UserSummary;
+  pepperCount: number;
+  heatScore: number;
+  saveCount: number;
+  openReports: number;
+  createdAt: string;
+}
+
+export interface AdminReport {
+  id: string;
+  reason: ReportReason;
+  comment?: string;
+  status: ReportStatus;
+  /** нет, если пин уже удалён */
+  pin?: AdminPin;
+  pinTitle?: string;
+  pinImageUrl: string;
+  reporter: UserSummary;
+  resolvedBy?: UserSummary;
+  resolvedAt?: string;
+  createdAt: string;
 }

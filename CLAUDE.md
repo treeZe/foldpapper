@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Fold Papper is a Pinterest-like site: a Spring Boot 3.3 API (Java 17, PostgreSQL 16) in `backend/` and a React SPA in `frontend/`. Users post pins, collect them on boards, follow each other, and react with **peppers** instead of likes. A pepper has a heat level from 1 to 5. There are no user roles and no admin panel yet.
+Fold Papper is a Pinterest-like site: a Spring Boot 3.3 API (Java 17, PostgreSQL 16) in `backend/` and a React SPA in `frontend/`. Users post pins, collect them on boards, follow each other, and react with **peppers** instead of likes. A pepper has a heat level from 1 to 5. Users can report pins. Users with the `ADMIN` role moderate content in the admin panel at `/admin`.
 
 Code comments, API error messages, and the smoke test are written in Russian. Keep new user-facing messages and comments in Russian to match.
 
@@ -32,9 +32,9 @@ npm run build        # typecheck + production build into dist/
 
 Keep `*.sh` files LF (enforced by `.gitattributes`): with CRLF, bash fails on the first line.
 
-`src/test` is currently empty. The test dependencies (spring-boot-testcontainers, testcontainers-postgresql, spring-security-test) are already declared, so tests that touch the database should use Testcontainers Postgres instead of H2. The schema uses `pg_trgm` and Postgres-specific DDL.
+Backend tests are integration tests (`@SpringBootTest` + MockMvc) against Testcontainers Postgres; see `AdminApiIntegrationTest`. Don't use H2: the schema needs `pg_trgm` and Postgres-specific DDL. The container is started in a `static {}` block because `testcontainers-junit-jupiter` isn't a dependency. `pom.xml` pins `testcontainers.version` to 1.21.x: the 1.19 version that Spring Boot 3.3 manages fails against Docker 29+ with "client version too old". Tests need a running Docker that the current user can access.
 
-Environment overrides: `DB_URL`, `DB_USER`, `DB_PASSWORD`, `SERVER_PORT`, `JWT_SECRET`, `JWT_TTL` (ISO-8601 duration, default `P7D`), and `STORAGE_DIR` (default `./uploads`). Swagger UI is served at `/swagger-ui.html`.
+Environment overrides: `DB_URL`, `DB_USER`, `DB_PASSWORD`, `SERVER_PORT`, `JWT_SECRET`, `JWT_TTL` (ISO-8601 duration, default `P7D`), `STORAGE_DIR` (default `./uploads`), and `ADMIN_USERNAMES` (comma-separated; `AdminBootstrap` grants these users `ADMIN` on startup, which is how the first admin is created). Swagger UI is served at `/swagger-ui.html`.
 
 ## Architecture
 
@@ -48,7 +48,27 @@ Packages under `com.foldpapper` are organized by feature (`user`, `pin`, `board`
 
 **Saving = board_pins.** A pin can sit on many boards. Adding a pin to a board is the "save" action and increments `save_count`. Removing the board's cover pin clears `boards.cover_pin_id`. Board slugs are unique per owner (`common/Slugs`).
 
-**Auth.** Auth is a stateless JWT (jjwt). `JwtAuthenticationFilter` builds an `AppUserPrincipal` (id + username) straight from the token claims without querying the database. Controllers receive it via `@AuthenticationPrincipal AppUserPrincipal`, which is `null` for anonymous callers on public endpoints. `SecurityConfig` allows anonymous `GET` on `/api/v1/pins|boards|users|tags/**`, plus auth, uploads, health, and Swagger. Everything else requires a token. This is why the authenticated home feed is at `/api/v1/feed`, outside `/pins`. Login accepts a username or an email.
+**Auth.**
+- Auth is a stateless JWT (jjwt). The token carries only the id and username.
+- On every request `JwtAuthenticationFilter` reads the role and ban state from the database with one query by primary key (`UserRepository.findAuthStateById`), so bans and demotions take effect immediately. Don't move the role into token claims.
+- A banned user gets `401` with the message `Аккаунт заблокирован`, and the frontend logs out on any 401. A token for a deleted user simply becomes anonymous.
+- Login checks the ban after the password check (`AuthService`), so a ban isn't revealed without the right password.
+- Controllers receive `@AuthenticationPrincipal AppUserPrincipal`, which is `null` for anonymous callers on public endpoints. The principal has `getRole()`/`isAdmin()` and the authority `ROLE_<role>`.
+- `SecurityConfig` rules:
+  - `/api/v1/admin/**` is `hasRole("ADMIN")`.
+  - `/api/v1/users/me` requires a token.
+  - Anonymous `GET` is allowed on `/api/v1/pins|boards|users|tags/**`, plus auth, uploads, health, and Swagger.
+  - Everything else requires a token. This is why the authenticated home feed is at `/api/v1/feed`, outside `/pins`.
+- Login accepts a username or an email.
+
+**Moderation.**
+- The `report` package holds pin reports; the unique pair is (pin, reporter).
+- `reports.pin_id` is `ON DELETE SET NULL`. The report keeps a snapshot of the pin's title and image URL, so the moderation history survives pin deletion.
+- The `admin` package holds stats, users, pins, and reports.
+- `AdminService.deletePin` resolves all open reports on the pin, then calls `PinService.deleteAsModerator`.
+- Guard rails: an admin can't change their own role or ban themselves, and an admin must be demoted before being banned.
+- Activity stats bucket days in the admin's timezone (`?tz=`). They use `JdbcTemplate` over a fixed whitelist of table names.
+- Pin deletion by the owner or a moderator goes through `PinService.deleteWithCounters`. It first decrements `boards.pin_count` for every board containing the pin (the `board_pins` rows are removed by the database cascade, which doesn't touch the counters).
 
 **Responses and errors.**
 - Paginated endpoints return `common/PageResponse`, never a Spring `Page`.
@@ -70,3 +90,7 @@ The frontend uses React 19, TypeScript, Vite, `react-router` v8 (imported from `
   - Other keys: `['user', username.toLowerCase()]`, `['boards', username]`, `['board', id]`.
 - `PinGrid` wraps `useInfiniteQuery` with `Masonry`. `Masonry` places each card in the shortest column, using `imageWidth`/`imageHeight` from the API to reserve space for images.
 - Saving a pin to a board is idempotent on the backend (saving again returns no error). The frontend re-fetches `saveCount` from the API instead of incrementing it locally.
+- `api()` returns `undefined` for an empty response body. Some endpoints answer `201` with no body, for example `POST /pins/{id}/reports`.
+- The admin panel lives in `src/pages/admin/`. `RequireAdmin` only hides the routes; the backend enforces access.
+  - Admin lists use `useAdminList` (infinite query + «Показать ещё»), with keys starting `['admin', …]`. Mutations invalidate `['admin']`.
+  - The activity charts follow the dataviz rules: one series per card, no dual axis, `--chart-bar` checked for light and dark themes, per-bar tooltips on hover and focus, and a table view.

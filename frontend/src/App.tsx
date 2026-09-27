@@ -3,6 +3,11 @@ import { createBrowserRouter, Link, Navigate, RouterProvider, useLocation } from
 import { useAuth } from './auth/AuthContext';
 import { Layout } from './components/Layout';
 import { EmptyState, Spinner } from './components/ui';
+import { AdminLayout } from './pages/admin/AdminLayout';
+import { AdminOverview } from './pages/admin/AdminOverview';
+import { AdminPins } from './pages/admin/AdminPins';
+import { AdminReports } from './pages/admin/AdminReports';
+import { AdminUsers } from './pages/admin/AdminUsers';
 import { LoginPage, RegisterPage } from './pages/AuthPages';
 import { BoardPage } from './pages/BoardPage';
 import { CreatePinPage } from './pages/CreatePinPage';
@@ -18,6 +23,12 @@ function RequireAuth({ children }: { children: ReactNode }) {
   if (loading) return <Spinner />;
   if (!user) return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
   return children;
+}
+
+/** Скрывает админку от остальных; настоящая защита — на бэкенде (403). */
+function RequireAdmin({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  return user?.role === 'ADMIN' ? children : <NotFound />;
 }
 
 function NotFound() {
@@ -58,6 +69,22 @@ const router = createBrowserRouter([
       { path: '/board/:id', element: <BoardPage /> },
       { path: '/create', element: <RequireAuth><CreatePinPage /></RequireAuth> },
       { path: '/settings', element: <RequireAuth><SettingsPage /></RequireAuth> },
+      {
+        path: '/admin',
+        element: (
+          <RequireAuth>
+            <RequireAdmin>
+              <AdminLayout />
+            </RequireAdmin>
+          </RequireAuth>
+        ),
+        children: [
+          { index: true, element: <AdminOverview /> },
+          { path: 'reports', element: <AdminReports /> },
+          { path: 'users', element: <AdminUsers /> },
+          { path: 'pins', element: <AdminPins /> },
+        ],
+      },
       { path: '*', element: <NotFound /> },
     ],
   },

@@ -32,4 +32,13 @@ public interface BoardRepository extends JpaRepository<Board, UUID> {
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Board b SET b.pinCount = b.pinCount - 1 WHERE b.id = :id AND b.pinCount > 0")
     int decrementPinCount(@Param("id") UUID id);
+
+    /** Перед удалением пина: board_pins уйдут каскадом в БД, а счётчики досок сами не уменьшатся. */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+            UPDATE Board b SET b.pinCount = b.pinCount - 1
+            WHERE b.pinCount > 0
+              AND b.id IN (SELECT bp.id.boardId FROM BoardPin bp WHERE bp.id.pinId = :pinId)
+            """)
+    int decrementPinCountForPin(@Param("pinId") UUID pinId);
 }

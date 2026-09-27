@@ -19,9 +19,9 @@ export class ApiError extends Error {
   }
 }
 
-/** Вызывается при 401 на запросе с токеном — токен протух или отозван. */
-let onUnauthorized: () => void = () => {};
-export function setUnauthorizedHandler(handler: () => void) {
+/** Вызывается при 401 на запросе с токеном — токен протух, отозван или аккаунт заблокирован. */
+let onUnauthorized: (message?: string) => void = () => {};
+export function setUnauthorizedHandler(handler: (message?: string) => void) {
   onUnauthorized = handler;
 }
 
@@ -63,10 +63,6 @@ export async function api<T>(path: string, { method = 'GET', body, query }: Requ
     throw new ApiError(0, 'Сервер недоступен. Проверьте, что бэкенд запущен.');
   }
 
-  if (response.status === 401 && token) {
-    onUnauthorized();
-  }
-
   if (!response.ok) {
     let data: Partial<ApiErrorBody> = {};
     try {
@@ -74,11 +70,13 @@ export async function api<T>(path: string, { method = 'GET', body, query }: Requ
     } catch {
       // тело не JSON — например, прокси вернул HTML
     }
+    if (response.status === 401 && token) {
+      onUnauthorized(data.message);
+    }
     throw new ApiError(response.status, data.message ?? `Ошибка ${response.status}`, data.fieldErrors ?? {});
   }
 
-  if (response.status === 204) {
-    return undefined as T;
-  }
-  return response.json() as Promise<T>;
+  // 204 или 201 без тела (например, жалоба) — возвращаем undefined, а не падаем на JSON.parse
+  const text = await response.text();
+  return (text ? JSON.parse(text) : undefined) as T;
 }

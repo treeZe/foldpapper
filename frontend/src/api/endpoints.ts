@@ -1,5 +1,9 @@
 import { api } from './client';
 import type {
+  AdminPin,
+  AdminReport,
+  AdminStats,
+  AdminUser,
   AuthResponse,
   Board,
   BoardInput,
@@ -8,6 +12,9 @@ import type {
   PepperResponse,
   Pin,
   PinInput,
+  ReportReason,
+  ReportStatus,
+  Role,
   StoredImage,
   TagUsage,
   User,
@@ -79,4 +86,23 @@ export const mediaApi = {
     form.append('file', file);
     return api<StoredImage>('/media/images', { method: 'POST', body: form });
   },
+};
+
+export const reportsApi = {
+  create: (pinId: string, reason: ReportReason, comment?: string) =>
+    api<void>(`/pins/${pinId}/reports`, { method: 'POST', body: { reason, comment } }),
+};
+
+export const adminApi = {
+  stats: () => api<AdminStats>('/admin/stats', { query: { tz: Intl.DateTimeFormat().resolvedOptions().timeZone } }),
+  users: (params: { q?: string; filter?: string }, page: number) =>
+    api<Page<AdminUser>>('/admin/users', { query: { ...params, page, size: 20 } }),
+  updateUser: (id: string, body: { role?: Role; banned?: boolean; banReason?: string }) =>
+    api<AdminUser>(`/admin/users/${id}`, { method: 'PATCH', body }),
+  pins: (q: string | undefined, page: number) => api<Page<AdminPin>>('/admin/pins', { query: { q, page, size: 24 } }),
+  deletePin: (id: string) => api<void>(`/admin/pins/${id}`, { method: 'DELETE' }),
+  reports: (status: ReportStatus, page: number) =>
+    api<Page<AdminReport>>('/admin/reports', { query: { status, page, size: 20 } }),
+  resolve: (id: string, action: 'DELETE_PIN' | 'DISMISS') =>
+    api<void>(`/admin/reports/${id}/resolve`, { method: 'POST', body: { action } }),
 };

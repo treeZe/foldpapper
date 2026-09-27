@@ -69,7 +69,14 @@ public class AuthService {
             throw new BadCredentialsException("Неверный логин или пароль");
         }
         AppUserPrincipal principal = (AppUserPrincipal) authentication.getPrincipal();
-        return buildResponse(userService.requireById(principal.getId()));
+        User user = userService.requireById(principal.getId());
+        // проверяем после пароля, чтобы не раскрывать факт блокировки посторонним
+        if (user.isBanned()) {
+            throw ApiException.forbidden(StringUtils.hasText(user.getBanReason())
+                    ? "Аккаунт заблокирован: " + user.getBanReason()
+                    : "Аккаунт заблокирован");
+        }
+        return buildResponse(user);
     }
 
     private AuthResponse buildResponse(User user) {
