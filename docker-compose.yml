@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: foldpapper-postgres
+    environment:
+      POSTGRES_DB: foldpapper
+      POSTGRES_USER: foldpapper
+      POSTGRES_PASSWORD: foldpapper
+      # чтобы русские/юникод заголовки корректно сортировались
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U foldpapper -d foldpapper"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres-data:

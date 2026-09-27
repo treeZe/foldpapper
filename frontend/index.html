@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Fold Papper — визуальные закладки для идей, которые жгут. Собирайте пины на доски и оценивайте их перцем." />
+    <meta name="theme-color" content="#f5efe4" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Fold Papper — идеи, которые жгут</title>
+    <script>
+      // тема до отрисовки, чтобы не мигало
+      (function () {
+        var t = localStorage.getItem('fp-theme');
+        if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.dataset.theme = t;
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

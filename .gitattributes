@@ -1,0 +1,2 @@
+# shell-скрипты должны оставаться с LF, иначе bash на Linux/Git Bash их не запустит
+*.sh text eol=lf
