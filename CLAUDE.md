@@ -61,7 +61,7 @@ Packages under `com.foldpapper` are organized by feature (`user`, `pin`, `board`
   - Everything else requires a token. This is why the authenticated home feed is at `/api/v1/feed`, outside `/pins`.
 - Login accepts a username or an email.
 
-**Moderation.**
+**Moderation.** The user-facing admin guide (in Russian) is `docs/ADMIN.md`. Keep it in sync when admin behaviour or configuration changes.
 - The `report` package holds pin reports; the unique pair is (pin, reporter).
 - `reports.pin_id` is `ON DELETE SET NULL`. The report keeps a snapshot of the pin's title and image URL, so the moderation history survives pin deletion.
 - The `admin` package holds stats, users, pins, and reports.
