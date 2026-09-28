@@ -1,7 +1,8 @@
-import { useState, type FormEvent } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRef, useState, type FormEvent } from 'react';
+import { useMutation, useQueryClient, type InfiniteData, type QueryClient } from '@tanstack/react-query';
+import { ApiError } from '../api/client';
 import { adminApi } from '../api/endpoints';
-import type { Role } from '../api/types';
+import type { AdminReport, AdminUser, Page, Role, User } from '../api/types';
 import { useToast } from './Toast';
 import { Modal } from './ui';
 
@@ -15,16 +16,40 @@ const QUICK_REASONS = [
   { label: 'Фейк', reason: 'Фейковый аккаунт' },
 ];
 
+function mapPages<T>(data: InfiniteData<Page<T>> | undefined, fn: (item: T) => T) {
+  return data && { ...data, pages: data.pages.map((page) => ({ ...page, items: page.items.map(fn) })) };
+}
+
+/**
+ * Новое состояние пользователя — сразу во все кэши, где он виден. Иначе до перезапроса
+ * на экране остаётся «Заблокировать», и по ней можно нажать второй раз.
+ */
+function patchUserEverywhere(queryClient: QueryClient, updated: AdminUser) {
+  queryClient.setQueryData<User>(['user', updated.username.toLowerCase()], (old) =>
+    old && { ...old, role: updated.role, bannedAt: updated.bannedAt, banReason: updated.banReason },
+  );
+  queryClient.setQueriesData<InfiniteData<Page<AdminUser>>>({ queryKey: ['admin', 'users'] }, (data) =>
+    mapPages(data, (user) => (user.id === updated.id ? updated : user)),
+  );
+  queryClient.setQueriesData<InfiniteData<Page<AdminReport>>>({ queryKey: ['admin', 'reports'] }, (data) =>
+    mapPages(data, (report) => (report.targetUser?.id === updated.id ? { ...report, targetUser: updated } : report)),
+  );
+}
+
 /** Роль и блокировка из админки и со страницы профиля. */
 export function useUpdateUser() {
   const queryClient = useQueryClient();
   const toast = useToast();
+  const refresh = (username: string) => {
+    queryClient.invalidateQueries({ queryKey: ['admin'] });
+    queryClient.invalidateQueries({ queryKey: ['user', username.toLowerCase()] });
+  };
   return useMutation({
     mutationFn: ({ user, body }: { user: Target; body: { role?: Role; banned?: boolean; banReason?: string } }) =>
       adminApi.updateUser(user.id, body),
     onSuccess: (updated) => {
-      queryClient.invalidateQueries({ queryKey: ['admin'] });
-      queryClient.invalidateQueries({ queryKey: ['user', updated.username.toLowerCase()] });
+      patchUserEverywhere(queryClient, updated);
+      refresh(updated.username);
       toast(
         updated.bannedAt
           ? `${updated.username} заблокирован`
@@ -34,17 +59,35 @@ export function useUpdateUser() {
         'success',
       );
     },
-    onError: (error) => toast(error.message, 'error'),
+    onError: (error, { user }) => {
+      // чаще всего 409: состояние уже поменяли в другой вкладке или другой админ — подтягиваем актуальное
+      refresh(user.username);
+      toast(error.message, 'error');
+    },
   });
 }
 
 export function BanModal({ user, onClose }: { user: Target; onClose: () => void }) {
   const update = useUpdateUser();
   const [reason, setReason] = useState('');
+  // isPending обновится только после рендера, а два Enter подряд успевают раньше
+  const sending = useRef(false);
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    update.mutate({ user, body: { banned: true, banReason: reason.trim() || undefined } }, { onSuccess: onClose });
+    if (sending.current) return;
+    sending.current = true;
+    update.mutate(
+      { user, body: { banned: true, banReason: reason.trim() || undefined } },
+      {
+        onSuccess: onClose,
+        // 409 — уже заблокирован кем-то другим: окно больше не нужно, кнопки на странице обновятся
+        onError: (error) => error instanceof ApiError && error.status === 409 && onClose(),
+        onSettled: () => {
+          sending.current = false;
+        },
+      },
+    );
   };
 
   return (

@@ -89,6 +89,8 @@ class AdminApiIntegrationTest {
 
         banned(admin, "troll", true, "спам").andExpect(status().isOk())
                 .andExpect(jsonPath("$.banReason").value("спам"));
+        banned(admin, "troll", true, "ещё раз").andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Пользователь уже заблокирован"));
 
         mvc.perform(auth(get("/api/v1/users/me"), troll))
                 .andExpect(status().isUnauthorized())
@@ -100,6 +102,7 @@ class AdminApiIntegrationTest {
 
         banned(admin, "troll", false, null).andExpect(status().isOk());
         mvc.perform(auth(get("/api/v1/users/me"), troll)).andExpect(status().isOk());
+        banned(admin, "troll", false, null).andExpect(status().isConflict());
     }
 
     @Test

@@ -162,22 +162,32 @@ public class AdminService {
             // иначе можно случайно остаться без единого админа
             throw ApiException.badRequest("Нельзя менять роль или блокировать самого себя");
         }
-        User user = userRepository.findById(userId).orElseThrow(() -> ApiException.notFound("Пользователь"));
+        User user = userRepository.findForUpdateById(userId).orElseThrow(() -> ApiException.notFound("Пользователь"));
 
+        // повторный запрос (двойной клик, вторая вкладка, другой админ успел раньше) — ошибка, а не тихий успех
         if (update.role() != null) {
+            if (update.role() == user.getRole()) {
+                throw ApiException.conflict(user.isAdmin()
+                        ? "Пользователь уже администратор"
+                        : "Пользователь и так не администратор");
+            }
             user.setRole(update.role());
         }
         boolean newlyBanned = false;
         if (Boolean.TRUE.equals(update.banned())) {
+            if (user.isBanned()) {
+                throw ApiException.conflict("Пользователь уже заблокирован");
+            }
             if (user.isAdmin()) {
                 throw ApiException.badRequest("Сначала снимите с пользователя роль администратора");
             }
-            if (!user.isBanned()) {
-                user.setBannedAt(Instant.now());
-                newlyBanned = true;
-            }
+            user.setBannedAt(Instant.now());
             user.setBanReason(StringUtils.hasText(update.banReason()) ? update.banReason().trim() : null);
+            newlyBanned = true;
         } else if (Boolean.FALSE.equals(update.banned())) {
+            if (!user.isBanned()) {
+                throw ApiException.conflict("Пользователь не заблокирован");
+            }
             user.setBannedAt(null);
             user.setBanReason(null);
         }

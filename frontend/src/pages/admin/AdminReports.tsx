@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '../../api/endpoints';
 import type { AdminReport, ReportStatus } from '../../api/types';
-import { BanModal } from '../../components/BanModal';
+import { BanModal, useUpdateUser } from '../../components/BanModal';
 import { reasonLabel } from '../../components/ReportModal';
 import { Tabs } from '../../components/Tabs';
 import { useToast } from '../../components/Toast';
@@ -53,11 +53,12 @@ function ReportFooter({ report }: { report: AdminReport }) {
 
 function UserReportCard({ report }: { report: AdminReport }) {
   const resolve = useResolve(report);
+  const update = useUpdateUser();
   const [banning, setBanning] = useState(false);
   const target = report.targetUser;
   const username = target?.username ?? report.targetUsername ?? '?';
   const others = target ? target.openReports - (report.status === 'OPEN' ? 1 : 0) : 0;
-  const canBan = target && !target.bannedAt && target.role !== 'ADMIN';
+  const canBan = target && target.role !== 'ADMIN';
 
   return (
     <article className="report-card">
@@ -95,11 +96,21 @@ function UserReportCard({ report }: { report: AdminReport }) {
       </div>
       {report.status === 'OPEN' && (
         <div className="report-card__actions">
-          {canBan && (
-            <button type="button" className="button button--danger-solid button--sm" onClick={() => setBanning(true)}>
-              Заблокировать
-            </button>
-          )}
+          {canBan &&
+            (target.bannedAt ? (
+              <button
+                type="button"
+                className="button button--ghost button--sm"
+                disabled={update.isPending}
+                onClick={() => update.mutate({ user: target, body: { banned: false } })}
+              >
+                Разблокировать
+              </button>
+            ) : (
+              <button type="button" className="button button--danger-solid button--sm" onClick={() => setBanning(true)}>
+                Заблокировать
+              </button>
+            ))}
           <button type="button" className="button button--ghost button--sm" disabled={resolve.isPending} onClick={() => resolve.mutate('DISMISS')}>
             Отклонить
           </button>
