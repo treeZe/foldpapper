@@ -1,15 +1,18 @@
 import { useState } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import { usersApi } from '../api/endpoints';
+import type { User } from '../api/types';
 import { useAuth } from '../auth/AuthContext';
+import { BanModal, useUpdateUser } from '../components/BanModal';
 import { BoardCard, BoardFormModal } from '../components/BoardCard';
 import { FollowButton, profileQuery } from '../components/FollowButton';
-import { PlusIcon, ShieldIcon } from '../components/Icons';
+import { FlagIcon, LinkIcon, PlusIcon, ShieldIcon } from '../components/Icons';
 import { PinGrid } from '../components/PinGrid';
+import { ReportModal } from '../components/ReportModal';
 import { Tabs } from '../components/Tabs';
 import { Avatar, EmptyState, ErrorState, Spinner } from '../components/ui';
-import { displayName, formatCount, formatDate, plural } from '../lib/format';
+import { displayName, formatCount, formatDate, hostOf, plural } from '../lib/format';
 
 type Tab = 'pins' | 'boards' | 'peppered';
 
@@ -41,6 +44,55 @@ function Boards({ username, isSelf }: { username: string; isSelf: boolean }) {
   );
 }
 
+/** Кнопки для чужого профиля: жалоба для всех, блокировка — для админа. */
+function ProfileModeration({ person }: { person: User }) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const update = useUpdateUser();
+  const [dialog, setDialog] = useState<'report' | 'ban' | null>(null);
+
+  if (user?.role === 'ADMIN') {
+    // админа сначала разжалуют в админке — бэкенд не даст его заблокировать
+    if (person.role === 'ADMIN') return null;
+    return (
+      <>
+        {person.bannedAt ? (
+          <button
+            type="button"
+            className="button button--ghost"
+            disabled={update.isPending}
+            onClick={() => update.mutate({ user: person, body: { banned: false } })}
+          >
+            Разблокировать
+          </button>
+        ) : (
+          <button type="button" className="button button--ghost button--danger" onClick={() => setDialog('ban')}>
+            Заблокировать
+          </button>
+        )}
+        {dialog === 'ban' && <BanModal user={person} onClose={() => setDialog(null)} />}
+      </>
+    );
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        className="icon-button"
+        title="Пожаловаться"
+        aria-label="Пожаловаться на профиль"
+        onClick={() => (user ? setDialog('report') : navigate('/login', { state: { from: `/u/${person.username}` } }))}
+      >
+        <FlagIcon />
+      </button>
+      {dialog === 'report' && (
+        <ReportModal target={{ kind: 'USER', username: person.username }} onClose={() => setDialog(null)} />
+      )}
+    </>
+  );
+}
+
 export function ProfilePage() {
   const { username = '' } = useParams();
   const { user } = useAuth();
@@ -67,9 +119,22 @@ export function ProfilePage() {
             <ShieldIcon size={14} /> Модератор
           </span>
         )}
-        <p className="muted">
-          @{person.username} · с нами с {formatDate(person.createdAt)}
+        {person.bannedAt && (
+          <span className="badge badge--danger" title={person.banReason}>
+            Заблокирован {formatDate(person.bannedAt)}
+            {person.banReason && <> · {person.banReason}</>}
+          </span>
+        )}
+        <p className="profile-head__meta muted">
+          <span>@{person.username}</span>
+          {person.location && <span>{person.location}</span>}
+          <span>с нами с {formatDate(person.createdAt)}</span>
         </p>
+        {person.website && (
+          <a className="profile-head__site" href={person.website} target="_blank" rel="noopener noreferrer nofollow ugc">
+            <LinkIcon size={16} /> {hostOf(person.website) ?? person.website}
+          </a>
+        )}
         {person.bio && <p className="profile-head__bio">{person.bio}</p>}
         <dl className="profile-head__stats">
           <div>
@@ -88,14 +153,34 @@ export function ProfilePage() {
             <dt>{plural(stats.following, 'подписка', 'подписки', 'подписок')}</dt>
             <dd>{formatCount(stats.following)}</dd>
           </div>
+          <div>
+            <dt>{plural(stats.peppers, 'перец получен', 'перца получено', 'перцев получено')}</dt>
+            <dd>{formatCount(stats.peppers)}</dd>
+          </div>
+          <div>
+            <dt>{plural(stats.saves, 'сохранение', 'сохранения', 'сохранений')}</dt>
+            <dd>{formatCount(stats.saves)}</dd>
+          </div>
         </dl>
+        {person.topTags.length > 0 && (
+          <div className="tag-cloud tag-cloud--wrap profile-head__tags" aria-label="Любимые теги">
+            {person.topTags.map((tag) => (
+              <Link key={tag} to={`/search?tag=${encodeURIComponent(tag)}`} className="chip">
+                #{tag}
+              </Link>
+            ))}
+          </div>
+        )}
         <div className="profile-head__actions">
           {isSelf ? (
             <Link to="/settings" className="button button--ghost">
               Редактировать профиль
             </Link>
           ) : (
-            <FollowButton username={person.username} />
+            <>
+              <FollowButton username={person.username} />
+              <ProfileModeration person={person} />
+            </>
           )}
         </div>
       </section>

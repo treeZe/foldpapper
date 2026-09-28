@@ -65,7 +65,9 @@ public class UserController {
     @Operation(summary = "Публичный профиль")
     public UserResponse profile(@PathVariable String username,
                                 @AuthenticationPrincipal AppUserPrincipal principal) {
-        return userService.getProfile(username, principal == null ? null : principal.getId());
+        return principal == null
+                ? userService.getProfile(username, null, false)
+                : userService.getProfile(username, principal.getId(), principal.isAdmin());
     }
 
     @GetMapping("/{username}/pins")

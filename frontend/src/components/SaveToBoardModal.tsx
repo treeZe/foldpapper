@@ -30,7 +30,7 @@ export function SaveToBoardModal({ pin, onClose }: { pin: Pin; onClose: () => vo
       pinsApi.get(pin.id).then((fresh) => patchPinEverywhere(queryClient, pin.id, { saveCount: fresh.saveCount }));
       queryClient.invalidateQueries({ queryKey: ['boards'] });
       queryClient.invalidateQueries({ queryKey: ['pins', 'board', board.id] });
-      toast(`Сохранено на «${board.title}»`, 'success');
+      toast(`Сложено на доску «${board.title}»`, 'success');
       onClose();
     },
     onError: (error) => toast(error.message, 'error'),

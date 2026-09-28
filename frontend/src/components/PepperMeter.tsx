@@ -45,11 +45,32 @@ interface Props {
   size?: 'sm' | 'lg';
 }
 
+interface Scrap {
+  angle: number;
+  distance: number;
+  spin: number;
+  delay: number;
+  size: number;
+}
+
+/** Бумажные обрезки, которые разлетаются из перца при оценке: чем острее, тем больше. */
+function makeScraps(level: number): Scrap[] {
+  const count = 3 + level * 2;
+  return Array.from({ length: count }, (_, i) => ({
+    angle: (360 / count) * i + Math.random() * 30 - 15,
+    distance: 18 + level * 4 + Math.random() * 14,
+    spin: Math.random() * 540 - 270,
+    delay: Math.random() * 60,
+    size: 6 + Math.random() * 5,
+  }));
+}
+
 export function PepperMeter({ pin, size = 'lg' }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const mutation = usePepper(pin);
   const [hover, setHover] = useState(0);
+  const [burst, setBurst] = useState<{ id: number; level: number; scraps: Scrap[] } | null>(null);
   const current = pin.myPepper ?? 0;
   const shown = hover || current;
 
@@ -59,7 +80,9 @@ export function PepperMeter({ pin, size = 'lg' }: Props) {
       return;
     }
     // повторный клик по текущей остроте убирает перец
-    mutation.mutate(value === current ? null : value);
+    const removing = value === current;
+    mutation.mutate(removing ? null : value);
+    if (!removing) setBurst({ id: Date.now(), level: value, scraps: makeScraps(value) });
   };
 
   return (
@@ -87,14 +110,48 @@ export function PepperMeter({ pin, size = 'lg' }: Props) {
               }}
             >
               <PepperIcon size={size === 'lg' ? 30 : 20} filled={active} color={active ? 'var(--pepper-color)' : 'currentColor'} />
+              {burst?.level === level.value && (
+                <span
+                  key={burst.id}
+                  className="paper-burst"
+                  aria-hidden
+                  style={{ '--scrap-color': level.color } as CSSProperties}
+                >
+                  {burst.scraps.map((scrap, i) => (
+                    <span
+                      key={i}
+                      style={
+                        {
+                          '--angle': `${scrap.angle}deg`,
+                          '--distance': `${scrap.distance}px`,
+                          '--spin': `${scrap.spin}deg`,
+                          '--size': `${scrap.size}px`,
+                          animationDelay: `${scrap.delay}ms`,
+                        } as CSSProperties
+                      }
+                    />
+                  ))}
+                </span>
+              )}
             </button>
           );
         })}
       </div>
       {size === 'lg' && (
-        <span className="pepper-meter__label" style={{ color: shown ? HEAT_LEVELS[shown - 1].color : undefined }}>
-          {shown ? HEAT_LEVELS[shown - 1].label : 'Оцените остроту'}
-          {!hover && current > 0 && <small> · нажмите ещё раз, чтобы убрать</small>}
+        <span className="pepper-meter__label">
+          {!hover && current > 0 ? (
+            <>
+              <span className="pepper-meter__mine" style={{ '--mine': HEAT_LEVELS[current - 1].color } as CSSProperties}>
+                Ваша оценка: {current} <PepperIcon size={15} color="var(--mine)" />
+              </span>
+              <span style={{ color: HEAT_LEVELS[current - 1].color }}>{HEAT_LEVELS[current - 1].label}</span>
+              <small>нажмите ещё раз, чтобы убрать</small>
+            </>
+          ) : (
+            <span style={{ color: shown ? HEAT_LEVELS[shown - 1].color : undefined }}>
+              {shown ? HEAT_LEVELS[shown - 1].label : 'Оцените остроту'}
+            </span>
+          )}
         </span>
       )}
     </div>

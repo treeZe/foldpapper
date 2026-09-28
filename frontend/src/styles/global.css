@@ -6,27 +6,36 @@
   --font-display: 'Unbounded Variable', 'Onest Variable', system-ui, sans-serif;
   --font-body: 'Onest Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
-  --paper: #f5efe4;
-  --paper-2: #ede4d4;
-  --card: #fffaf2;
-  --ink: #1d1714;
-  --ink-2: #5c5048;
-  --ink-3: #9a8c80;
-  --line: #e2d6c3;
-  --chili: #e03e2a;
-  --chili-deep: #b92c1c;
-  --chili-soft: #fbe0d8;
-  --stem: #2f6b47;
+  --paper: #fbf6ef;
+  --paper-2: #f3ebdf;
+  --card: #fffdf9;
+  --ink: #2a1f1c;
+  --ink-2: #5f514a;
+  --ink-3: #8e8078;
+  --line: #eadfd1;
+  /* огненный красный чили: без ухода в розовый, белый текст держит AA (4.94:1) */
+  --chili: #d62d1f;
+  --chili-deep: #b01f12;
+  /* тёплый отсвет пламени, а не розовый */
+  --chili-soft: #ffe6d8;
+  /* тёплый «жар» для градиентов рядом с чили */
+  --ember: #f58a1f;
+  --stem: #3f7d4f;
   --focus: #1f7a8c;
 
-  --heat-1: #e9b21c;
-  --heat-2: #f08e1d;
-  --heat-3: #e8621b;
-  --heat-4: #d8361f;
-  --heat-5: #9f1430;
+  /* шкала остроты — как пламя: жёлтый → оранжевый → красно-оранжевый → красный → тёмный жар */
+  --heat-1: #e9a800;
+  --heat-2: #f58a1f;
+  --heat-3: #ee6019;
+  --heat-4: #d62d1f;
+  --heat-5: #a3170f;
+
+  /* «стекло» поверх фотографий в карточках — одинаковое в обеих темах */
+  --glass: rgb(24 15 12 / 0.58);
+  --glass-line: rgb(255 255 255 / 0.14);
 
   /* столбцы графиков админки; проверено валидатором палитры на фоне --card */
-  --chart-bar: #e03e2a;
+  --chart-bar: #d62d1f;
   --danger: #c0262d;
 
   --radius: 20px;
@@ -34,6 +43,9 @@
   --shadow-sm: 0 1px 2px rgb(60 40 20 / 0.08), 0 2px 8px rgb(60 40 20 / 0.06);
   --shadow: 0 2px 4px rgb(60 40 20 / 0.06), 0 12px 32px -8px rgb(60 40 20 / 0.22);
   --shadow-lg: 0 30px 80px -20px rgb(60 30 10 / 0.35);
+  --crease: rgb(60 40 20 / 0.16);
+  --sheet-shadow: drop-shadow(0 1px 2px rgb(60 40 20 / 0.1)) drop-shadow(0 3px 8px rgb(60 40 20 / 0.07));
+  --sheet-shadow-hover: drop-shadow(0 4px 6px rgb(60 40 20 / 0.1)) drop-shadow(0 16px 20px rgb(60 40 20 / 0.2));
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .25 0 0 0 0 .15 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 
@@ -41,25 +53,29 @@
 }
 
 :root[data-theme='dark'] {
-  --paper: #15110e;
-  --paper-2: #1f1915;
-  --card: #231c17;
-  --ink: #f6ece0;
-  --ink-2: #c7b8a8;
-  --ink-3: #85766a;
-  --line: #3a2f27;
-  --chili: #ff5a3c;
-  --chili-deep: #ff7a5f;
-  --chili-soft: #3d1c14;
-  --stem: #5fae7b;
-  /* на тёмном фоне бордовый теряется — верх шкалы светлее */
-  --heat-4: #ff4a2e;
-  --heat-5: #ff3b6b;
-  --chart-bar: #f2553a;
+  --paper: #16110f;
+  --paper-2: #211a17;
+  --card: #251d19;
+  --ink: #f7ede4;
+  --ink-2: #cbbcb0;
+  --ink-3: #8f8076;
+  --line: #3b302a;
+  --chili: #e8392a;
+  --chili-deep: #ff6a4d;
+  --chili-soft: #3d1a12;
+  --stem: #62b07e;
+  /* на тёмном фоне тёмный жар теряется — верх шкалы светлее, но без ухода в розовый */
+  --heat-1: #f5b82e;
+  --heat-4: #ff5533;
+  --heat-5: #e11d1d;
+  --chart-bar: #f25033;
   --danger: #ff5c5c;
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
   --shadow: 0 2px 4px rgb(0 0 0 / 0.3), 0 16px 40px -10px rgb(0 0 0 / 0.6);
   --shadow-lg: 0 30px 80px -20px rgb(0 0 0 / 0.8);
+  --crease: rgb(0 0 0 / 0.45);
+  --sheet-shadow: drop-shadow(0 1px 2px rgb(0 0 0 / 0.4)) drop-shadow(0 3px 8px rgb(0 0 0 / 0.2));
+  --sheet-shadow-hover: drop-shadow(0 4px 6px rgb(0 0 0 / 0.3)) drop-shadow(0 16px 20px rgb(0 0 0 / 0.5));
   --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .9 0 0 0 0 .8 0 0 0 .035 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   color-scheme: dark;
 }
@@ -219,16 +235,26 @@ button {
 .button--chili {
   --bg: var(--chili);
   --fg: #fff;
-  box-shadow: 0 6px 18px -6px color-mix(in srgb, var(--chili) 70%, transparent);
+  background-image: linear-gradient(180deg, rgb(255 255 255 / 0.14), transparent 60%);
+  box-shadow:
+    inset 0 -1px 0 rgb(0 0 0 / 0.12),
+    0 6px 18px -8px color-mix(in srgb, var(--chili) 80%, transparent);
 }
 
 .button--chili:hover:not(:disabled) {
   --bg: var(--chili-deep);
 }
 
-.button--ink {
-  --bg: var(--ink);
-  --fg: var(--paper);
+/* второстепенное красное действие рядом с главной кнопкой («Подписаться») */
+.button--outline {
+  --bg: transparent;
+  --fg: var(--chili);
+  border-color: var(--chili);
+}
+
+.button--outline:hover:not(:disabled) {
+  --bg: var(--chili);
+  --fg: #fff;
 }
 
 .button--ghost {
@@ -246,8 +272,8 @@ button {
 }
 
 .button--glass {
-  --bg: rgb(255 250 242 / 0.88);
-  --fg: #1d1714;
+  --bg: rgb(255 253 249 / 0.9);
+  --fg: #2a1f1c;
   backdrop-filter: blur(8px);
 }
 
@@ -294,8 +320,8 @@ button {
 }
 
 .icon-button--glass {
-  background: rgb(255 250 242 / 0.9);
-  color: #1d1714;
+  background: rgb(255 253 249 / 0.9);
+  color: #2a1f1c;
   backdrop-filter: blur(8px);
 }
 
@@ -364,14 +390,16 @@ button {
   transition: background-color 0.2s, color 0.2s;
 }
 
-.header__nav a:hover {
+.header__nav a:hover:not(.active) {
   color: var(--ink);
   background: var(--paper-2);
 }
 
-.header__nav a.active {
-  color: var(--paper);
-  background: var(--ink);
+.header__nav a.active,
+.admin__nav a.active {
+  color: #fff;
+  background: linear-gradient(135deg, var(--chili), color-mix(in srgb, var(--chili) 78%, var(--ember)));
+  box-shadow: 0 6px 16px -8px var(--chili);
 }
 
 .header__auth {
@@ -782,6 +810,7 @@ a:hover > .logo .logo__mark {
   color: var(--ink-3);
 }
 
+button.chip:not(.chip--active):hover,
 a.chip:hover {
   border-color: var(--chili);
   color: var(--chili);
@@ -829,21 +858,51 @@ a.chip:hover {
 .pin-card {
   position: relative;
   animation: fade-up 0.5s var(--ease) both;
+  transition: --fold 0.45s var(--ease);
 }
 
+/* размер загнутого уголка; анимируется как длина, чтобы вырез и клапан двигались синхронно */
+@property --fold {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0px;
+}
+
+
+.pin-card.is-dog-eared {
+  --fold: 22px;
+}
+
+.pin-card:hover {
+  --fold: 46px;
+}
+
+/* тень рисует filter, а не box-shadow: она повторяет форму листа вместе с вырезанным углом */
 .pin-card__media {
   position: relative;
   display: block;
+  filter: var(--sheet-shadow);
+  transition:
+    transform 0.35s var(--ease),
+    filter 0.35s var(--ease);
+}
+
+.pin-card:hover .pin-card__media {
+  transform: translateY(-3px);
+  filter: var(--sheet-shadow-hover);
+}
+
+.pin-card__paper {
+  position: absolute;
+  inset: 0;
   overflow: hidden;
   border-radius: var(--radius);
   background:
     linear-gradient(110deg, transparent 30%, rgb(255 255 255 / 0.35) 50%, transparent 70%) var(--paper-2);
   background-size: 250% 100%;
   animation: shimmer 1.6s linear infinite;
-  box-shadow: var(--shadow-sm);
-  transition:
-    transform 0.35s var(--ease),
-    box-shadow 0.35s var(--ease);
+  /* угол листа отгибается — под ним видно страницу */
+  clip-path: polygon(0 0, calc(100% - var(--fold)) 0, 100% var(--fold), 100% 100%, 0 100%);
 }
 
 .pin-card__media img {
@@ -854,7 +913,8 @@ a.chip:hover {
   transform: scale(1.04);
   transition:
     opacity 0.5s,
-    transform 0.6s var(--ease);
+    transform 0.6s var(--ease),
+    filter 0.35s;
 }
 
 .pin-card__media img.is-loaded {
@@ -862,33 +922,34 @@ a.chip:hover {
   transform: none;
 }
 
-.pin-card:hover .pin-card__media {
-  transform: translateY(-3px) rotate(-0.4deg);
-  box-shadow: var(--shadow);
-}
-
 .pin-card:hover .pin-card__media img.is-loaded {
   filter: brightness(0.84);
 }
 
-/* загнутый уголок в цвет остроты — фирменная деталь */
+/*
+ * Отогнутый клапан — зеркало вырезанного угла относительно линии сгиба.
+ * Обратная сторона бумаги в цвет остроты: светлый блик у сгиба, темнее к кончику.
+ * Тень лежит на обёртке, потому что clip-path срезал бы собственный drop-shadow.
+ */
 .pin-card__fold {
   position: absolute;
   top: 0;
   right: 0;
-  width: 0;
-  height: 0;
-  background: linear-gradient(225deg, var(--paper) 50%, var(--heat) 50%);
-  border-bottom-left-radius: 10px;
-  box-shadow: -3px 3px 8px rgb(0 0 0 / 0.18);
-  transition:
-    width 0.35s var(--ease),
-    height 0.35s var(--ease);
+  width: var(--fold);
+  height: var(--fold);
+  pointer-events: none;
+  filter: drop-shadow(-3px 4px 3px rgb(0 0 0 / 0.28));
 }
 
-.pin-card:hover .pin-card__fold {
-  width: 38px;
-  height: 38px;
+.pin-card__fold::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-bottom-left-radius: 7px;
+  background:
+    linear-gradient(225deg, rgb(255 255 255 / 0.75) 50%, rgb(255 255 255 / 0.25) 62%, transparent 85%),
+    linear-gradient(225deg, var(--fold-color) 60%, color-mix(in srgb, var(--fold-color) 78%, #000));
+  clip-path: polygon(0 0, 100% 100%, 0 100%);
 }
 
 .pin-card__heat {
@@ -898,17 +959,43 @@ a.chip:hover {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 10px 4px 6px;
+  padding: 3px;
+  border: 1px solid var(--glass-line);
   border-radius: 999px;
-  background: rgb(255 250 242 / 0.92);
-  color: #1d1714;
+  background: var(--glass);
+  color: #fff;
   font-size: 13px;
   font-weight: 700;
-  backdrop-filter: blur(6px);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  backdrop-filter: blur(10px) saturate(1.4);
   transition: opacity 0.2s;
 }
 
-.pin-card:hover .pin-card__heat {
+/* иконка суммы на тёмном стекле: винный пятый уровень без осветления сливается */
+.pin-card__heat-total svg {
+  color: color-mix(in srgb, var(--heat) 70%, #fff);
+}
+
+.pin-card__heat-total,
+.pin-card__heat-mine {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 24px;
+  padding: 0 8px 0 5px;
+  border-radius: 999px;
+}
+
+/* мои перцы — светлая «таблетка» внутри тёмной, чтобы сразу было видно, что пин уже оценён */
+.pin-card__heat-mine {
+  padding-left: 8px;
+  background: #fffdf9;
+  color: #2a1f1c;
+}
+
+.pin-card:hover .pin-card__heat,
+.pin-card:has(:focus-visible) .pin-card__heat {
   opacity: 0;
 }
 
@@ -928,8 +1015,9 @@ a.chip:hover {
   transition: opacity 0.25s;
 }
 
+/* не :focus-within: после клика по перцу кнопка остаётся в фокусе, и плашка «залипала» */
 .pin-card:hover .pin-card__overlay,
-.pin-card:focus-within .pin-card__overlay {
+.pin-card:has(:focus-visible) .pin-card__overlay {
   opacity: 1;
 }
 
@@ -941,14 +1029,39 @@ a.chip:hover {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-  margin-right: 30px;
+  /* место под отогнутый уголок */
+  margin-right: 44px;
 }
 
 .pin-card__meter {
   position: absolute;
-  left: 10px;
-  right: 10px;
+  left: 50%;
   bottom: 10px;
+  display: flex;
+  align-items: center;
+  padding: 2px 12px 2px 4px;
+  border: 1px solid var(--glass-line);
+  border-radius: 999px;
+  background: var(--glass);
+  color: #fff;
+  backdrop-filter: blur(10px) saturate(1.4);
+  box-shadow: 0 8px 24px -8px rgb(0 0 0 / 0.45);
+  transform: translate(-50%, 6px);
+  transition: transform 0.25s var(--ease);
+}
+
+.pin-card:hover .pin-card__meter,
+.pin-card:has(:focus-visible) .pin-card__meter {
+  transform: translate(-50%, 0);
+}
+
+.pin-card__meter-total {
+  margin-left: 4px;
+  padding-left: 10px;
+  border-left: 1px solid rgb(255 255 255 / 0.22);
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .pin-card__footer {
@@ -999,15 +1112,11 @@ a.chip:hover {
 }
 
 .pepper-meter--sm .pepper-meter__row {
-  justify-content: center;
-  padding: 4px;
-  border-radius: 999px;
-  background: rgb(255 250 242 / 0.92);
-  backdrop-filter: blur(8px);
-  box-shadow: var(--shadow-sm);
+  gap: 0;
 }
 
 .pepper-meter__pepper {
+  position: relative;
   display: grid;
   place-items: center;
   padding: 4px;
@@ -1018,8 +1127,9 @@ a.chip:hover {
   transition: transform 0.2s var(--ease);
 }
 
+/* мелкий пульт живёт на тёмном стекле поверх фото */
 .pepper-meter--sm .pepper-meter__pepper {
-  color: #b5a698;
+  color: rgb(255 255 255 / 0.6);
   padding: 3px;
 }
 
@@ -1032,17 +1142,53 @@ a.chip:hover {
   animation: pepper-pop 0.35s var(--ease);
 }
 
+/* обрезки бумаги в цвет остроты разлетаются из перца при оценке */
+.paper-burst {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  pointer-events: none;
+}
+
+.paper-burst span {
+  position: absolute;
+  left: calc(var(--size) / -2);
+  top: calc(var(--size) / -2);
+  width: var(--size);
+  height: var(--size);
+  background: var(--scrap-color);
+  clip-path: polygon(0 0, 100% 35%, 25% 100%);
+  animation: scrap-fly 0.8s cubic-bezier(0.15, 0.7, 0.3, 1) both;
+}
+
+.paper-burst span:nth-child(3n) {
+  background: color-mix(in srgb, var(--scrap-color) 45%, #fff);
+}
+
 .pepper-meter--lg .pepper-meter__row {
   gap: 6px;
 }
 
 .pepper-meter--lg .pepper-meter__pepper {
   padding: 8px;
-  background: var(--paper);
+  background: var(--card);
   border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  transition:
+    transform 0.2s var(--ease),
+    background-color 0.2s;
+}
+
+.pepper-meter--lg .pepper-meter__pepper.is-active {
+  background: color-mix(in srgb, var(--pepper-color) 14%, var(--card));
 }
 
 .pepper-meter__label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  min-height: 30px;
   font-family: var(--font-display);
   font-weight: 650;
   font-size: 15px;
@@ -1050,7 +1196,22 @@ a.chip:hover {
   transition: color 0.2s;
 }
 
+.pepper-meter__mine {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px 4px 12px;
+  border-radius: 999px;
+  background: var(--card);
+  box-shadow: inset 0 0 0 1.5px var(--mine);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 700;
+}
+
 .pepper-meter__label small {
+  flex-basis: 100%;
   font-family: var(--font-body);
   font-weight: 500;
   font-size: 13px;
@@ -1075,6 +1236,7 @@ a.chip:hover {
   place-items: center;
   padding: 16px;
   background: var(--paper-2);
+  box-shadow: inset -16px 0 18px -16px var(--crease);
 }
 
 .pin-detail__media img {
@@ -1089,6 +1251,9 @@ a.chip:hover {
   flex-direction: column;
   gap: 18px;
   padding: 28px 32px 32px;
+  box-shadow: inset 16px 0 18px -16px var(--crease);
+  transform-origin: left center;
+  animation: unfold-side 0.9s var(--ease) both;
 }
 
 .pin-detail__actions {
@@ -1159,9 +1324,24 @@ a.chip:hover {
   display: grid;
 }
 
+.heat-panel__stats div {
+  min-width: 0;
+}
+
 .heat-panel__stats strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-family: var(--font-display);
   font-size: 22px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* «Пикантно» шрифтом Unbounded шире колонки и наезжал на соседнюю */
+.heat-panel__stats .heat-panel__level {
+  font-size: 17px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
 }
 
 .heat-panel__stats span {
@@ -1245,6 +1425,44 @@ a.chip:hover {
   font-size: clamp(28px, 4vw, 42px);
 }
 
+.profile-head__meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px 8px;
+}
+
+.profile-head__meta span + span::before {
+  content: '·';
+  margin-right: 8px;
+}
+
+.profile-head__site {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--chili);
+  text-decoration: none;
+}
+
+.profile-head__site:hover {
+  text-decoration: underline;
+}
+
+.profile-head__tags {
+  justify-content: center;
+  margin-bottom: 0;
+}
+
+.profile-head__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
 .profile-head__bio {
   max-width: 520px;
   color: var(--ink-2);
@@ -1252,18 +1470,24 @@ a.chip:hover {
 }
 
 .profile-head__stats {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 8px;
+  width: 100%;
   margin: 10px 0;
+}
+
+@media (max-width: 640px) {
+  .profile-head__stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 .profile-head__stats div {
   display: flex;
   flex-direction: column-reverse;
-  min-width: 96px;
-  padding: 10px 16px;
+  justify-content: flex-end;
+  padding: 10px 8px;
   border-radius: 18px;
   background: var(--card);
   box-shadow: var(--shadow-sm);
@@ -1485,6 +1709,19 @@ textarea.input {
   border-color: var(--chili);
 }
 
+.form--tight {
+  gap: 12px;
+}
+
+.form--tight .tag-cloud {
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.form--tight p {
+  font-size: 14px;
+}
+
 .form__actions {
   display: flex;
   justify-content: flex-end;
@@ -1673,6 +1910,19 @@ textarea.input {
 
 .modal--wide {
   width: min(860px, calc(100vw - 24px));
+}
+
+.modal--compact {
+  width: min(440px, calc(100vw - 24px));
+}
+
+.modal--compact .modal__header {
+  margin-bottom: 12px;
+}
+
+.modal--compact .modal__header h2 {
+  font-size: 19px;
+  overflow-wrap: anywhere;
 }
 
 .modal::backdrop {
@@ -1882,17 +2132,40 @@ textarea.input {
 .spinner {
   display: grid;
   place-items: center;
+  gap: 14px;
   padding: 48px 0;
 }
 
-.spinner__pepper {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  border: 4px solid var(--line);
-  border-top-color: var(--chili);
-  border-right-color: var(--heat-2);
-  animation: spin 0.8s linear infinite;
+/* лист-оригами: верхняя половина складывается по диагонали на нижнюю и обратно */
+.spinner__sheet {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  animation: spin 4.8s linear infinite;
+}
+
+.spinner__half,
+.spinner__flap {
+  position: absolute;
+  inset: 0;
+  border-radius: 5px;
+}
+
+.spinner__half {
+  background: var(--chili);
+  clip-path: polygon(0 0, 0 100%, 100% 100%);
+}
+
+.spinner__flap {
+  background: var(--ember);
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+  animation: sheet-fold 1.2s var(--ease) infinite alternate;
+}
+
+.spinner__label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-3);
 }
 
 .empty {
@@ -1964,7 +2237,9 @@ textarea.input {
   color: var(--paper);
   font-weight: 600;
   box-shadow: var(--shadow-lg);
-  animation: toast-in 0.35s var(--ease);
+  /* тост разворачивается, как сложенная записка */
+  transform-origin: bottom center;
+  animation: toast-in 0.5s var(--ease);
   text-align: center;
 }
 
@@ -2035,15 +2310,11 @@ textarea.input {
     color 0.2s;
 }
 
-.admin__nav a:hover {
+.admin__nav a:hover:not(.active) {
   background: var(--paper-2);
   color: var(--ink);
 }
 
-.admin__nav a.active {
-  background: var(--ink);
-  color: var(--paper);
-}
 
 .admin__count {
   display: inline-flex;
@@ -2330,6 +2601,11 @@ textarea.input {
   font-size: 12px;
 }
 
+.user-reports {
+  margin-left: 6px;
+  text-decoration: none;
+}
+
 .row-actions {
   text-align: right;
   white-space: nowrap;
@@ -2414,7 +2690,11 @@ textarea.input {
   align-self: start;
 }
 
-.report-card__thumb img {
+.report-card__thumb--user {
+  justify-self: center;
+}
+
+.report-card__thumb img:not(.avatar) {
   width: 96px;
   height: 120px;
   object-fit: cover;
@@ -2649,7 +2929,66 @@ textarea.input {
 @keyframes toast-in {
   from {
     opacity: 0;
-    transform: translateY(16px) scale(0.95);
+    transform: perspective(500px) rotateX(-95deg);
+  }
+
+  60% {
+    opacity: 1;
+    transform: perspective(500px) rotateX(12deg);
+  }
+}
+
+@keyframes sheet-fold {
+  0%,
+  15% {
+    transform: rotate3d(1, 1, 0, 0deg);
+    background: var(--ember);
+  }
+
+  49.9% {
+    background: var(--ember);
+  }
+
+  /* после перегиба видна изнанка листа */
+  50% {
+    background: var(--chili-deep);
+  }
+
+  85%,
+  100% {
+    transform: rotate3d(1, 1, 0, 180deg);
+    background: var(--chili-deep);
+  }
+}
+
+@keyframes scrap-fly {
+  from {
+    opacity: 1;
+    transform: rotate(var(--angle)) translateX(0) scale(0.4);
+  }
+
+  70% {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+    translate: 0 10px;
+    transform: rotate(var(--angle)) translateX(var(--distance)) rotate(var(--spin)) scale(1);
+  }
+}
+
+@keyframes unfold-side {
+  from {
+    opacity: 0.2;
+    transform: perspective(1600px) rotateY(-75deg);
+  }
+}
+
+@keyframes unfold-down {
+  from {
+    opacity: 0.2;
+    transform: perspective(1600px) rotateX(75deg);
   }
 }
 
@@ -2707,6 +3046,16 @@ textarea.input {
     position: static;
   }
 
+  .pin-detail__media {
+    box-shadow: inset 0 -16px 18px -16px var(--crease);
+  }
+
+  .pin-detail__info {
+    box-shadow: inset 0 16px 18px -16px var(--crease);
+    transform-origin: top center;
+    animation-name: unfold-down;
+  }
+
   .admin__nav {
     display: flex;
     overflow-x: auto;
@@ -2720,7 +3069,7 @@ textarea.input {
     grid-template-columns: 72px minmax(0, 1fr);
   }
 
-  .report-card__thumb img {
+  .report-card__thumb img:not(.avatar) {
     width: 72px;
     height: 90px;
   }

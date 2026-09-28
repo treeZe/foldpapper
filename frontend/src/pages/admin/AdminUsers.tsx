@@ -1,72 +1,17 @@
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '../../api/endpoints';
-import type { AdminUser, Role } from '../../api/types';
+import type { AdminUser } from '../../api/types';
 import { useAuth } from '../../auth/AuthContext';
-import { SearchIcon, ShieldIcon } from '../../components/Icons';
+import { BanModal, useUpdateUser } from '../../components/BanModal';
+import { FlagIcon, SearchIcon, ShieldIcon } from '../../components/Icons';
 import { Tabs } from '../../components/Tabs';
-import { useToast } from '../../components/Toast';
-import { Avatar, EmptyState, ErrorState, Field, Modal, Spinner } from '../../components/ui';
-import { displayName, formatDate } from '../../lib/format';
+import { Avatar, EmptyState, ErrorState, Spinner } from '../../components/ui';
+import { displayName, formatDate, plural } from '../../lib/format';
 import { useDebounced } from '../../lib/useDebounced';
 import { useAdminList } from './useAdminList';
 
 type Filter = 'all' | 'admins' | 'banned';
-
-function useUpdateUser() {
-  const queryClient = useQueryClient();
-  const toast = useToast();
-  return useMutation({
-    mutationFn: ({ user, body }: { user: AdminUser; body: { role?: Role; banned?: boolean; banReason?: string } }) =>
-      adminApi.updateUser(user.id, body),
-    onSuccess: (updated) => {
-      queryClient.invalidateQueries({ queryKey: ['admin'] });
-      queryClient.invalidateQueries({ queryKey: ['user', updated.username.toLowerCase()] });
-      toast(
-        updated.bannedAt
-          ? `${updated.username} заблокирован`
-          : updated.role === 'ADMIN'
-            ? `${updated.username} теперь администратор`
-            : `Изменения для ${updated.username} сохранены`,
-        'success',
-      );
-    },
-    onError: (error) => toast(error.message, 'error'),
-  });
-}
-
-function BanModal({ user, onClose }: { user: AdminUser; onClose: () => void }) {
-  const update = useUpdateUser();
-  const [reason, setReason] = useState('');
-
-  const submit = (event: FormEvent) => {
-    event.preventDefault();
-    update.mutate({ user, body: { banned: true, banReason: reason.trim() || undefined } }, { onSuccess: onClose });
-  };
-
-  return (
-    <Modal title={`Заблокировать @${user.username}?`} onClose={onClose}>
-      <form className="form" onSubmit={submit}>
-        <p className="muted">
-          Пользователя сразу разлогинит, войти снова он не сможет. Его пины останутся на сайте — при необходимости удалите их
-          отдельно.
-        </p>
-        <Field label="Причина" hint="Её увидит пользователь при попытке входа">
-          <input className="input" maxLength={300} value={reason} autoFocus onChange={(e) => setReason(e.target.value)} />
-        </Field>
-        <div className="form__actions">
-          <button type="button" className="button button--ghost" onClick={onClose}>
-            Отмена
-          </button>
-          <button type="submit" className="button button--danger-solid" disabled={update.isPending}>
-            Заблокировать
-          </button>
-        </div>
-      </form>
-    </Modal>
-  );
-}
 
 function UserRow({ user, isSelf }: { user: AdminUser; isSelf: boolean }) {
   const update = useUpdateUser();
@@ -98,6 +43,11 @@ function UserRow({ user, isSelf }: { user: AdminUser; isSelf: boolean }) {
           </span>
         ) : (
           <span className="badge">Активен</span>
+        )}
+        {user.openReports > 0 && (
+          <Link to="/admin/reports" className="badge badge--warn user-reports">
+            <FlagIcon size={12} /> {user.openReports} {plural(user.openReports, 'жалоба', 'жалобы', 'жалоб')}
+          </Link>
         )}
         {user.banReason && <small className="muted user-reason">{user.banReason}</small>}
       </td>

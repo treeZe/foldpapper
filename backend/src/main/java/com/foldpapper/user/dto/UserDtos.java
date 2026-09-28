@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 public final class UserDtos {
@@ -47,7 +48,9 @@ public final class UserDtos {
     public record UpdateProfileRequest(
             @Size(max = 80) String displayName,
             @Size(max = 500) String bio,
-            @Size(max = 1024) String avatarUrl
+            @Size(max = 1024) String avatarUrl,
+            @Size(max = 80) String location,
+            @Size(max = 255) String website
     ) {
     }
 
@@ -57,12 +60,19 @@ public final class UserDtos {
             String displayName,
             String bio,
             String avatarUrl,
+            String location,
+            String website,
             Instant createdAt,
             UserStats stats,
+            /** До пяти самых частых тегов в пинах пользователя. */
+            List<String> topTags,
             /** USER или ADMIN — фронтенду нужно, чтобы показать вход в админку. */
             String role,
             /** Подписан ли на него текущий пользователь; null для гостя и для своего профиля. */
-            Boolean followedByMe
+            Boolean followedByMe,
+            /** Блокировка видна только администраторам; для остальных null. */
+            Instant bannedAt,
+            String banReason
     ) {
     }
 
@@ -70,7 +80,11 @@ public final class UserDtos {
             long pins,
             long boards,
             long followers,
-            long following
+            long following,
+            /** Сколько перцев получили все его пины. */
+            long peppers,
+            /** Сколько раз его пины сохранили на доски. */
+            long saves
     ) {
     }
 

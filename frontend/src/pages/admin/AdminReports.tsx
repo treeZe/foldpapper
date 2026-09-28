@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '../../api/endpoints';
 import type { AdminReport, ReportStatus } from '../../api/types';
+import { BanModal } from '../../components/BanModal';
 import { reasonLabel } from '../../components/ReportModal';
 import { Tabs } from '../../components/Tabs';
 import { useToast } from '../../components/Toast';
@@ -11,16 +13,14 @@ import { useAdminList } from './useAdminList';
 
 const STATUS_TABS = [
   { value: 'OPEN' as const, label: 'Открытые' },
-  { value: 'RESOLVED' as const, label: 'Пин удалён' },
+  { value: 'RESOLVED' as const, label: 'Меры приняты' },
   { value: 'DISMISSED' as const, label: 'Отклонённые' },
 ];
 
-function ReportCard({ report }: { report: AdminReport }) {
+function useResolve(report: AdminReport) {
   const queryClient = useQueryClient();
   const toast = useToast();
-  const pin = report.pin;
-
-  const resolve = useMutation({
+  return useMutation({
     mutationFn: (action: 'DELETE_PIN' | 'DISMISS') => adminApi.resolve(report.id, action),
     onSuccess: (_data, action) => {
       queryClient.invalidateQueries({ queryKey: ['admin'] });
@@ -30,6 +30,94 @@ function ReportCard({ report }: { report: AdminReport }) {
     },
     onError: (error) => toast(error.message, 'error'),
   });
+}
+
+function ReportFooter({ report }: { report: AdminReport }) {
+  return (
+    <>
+      {report.comment && <blockquote className="report-card__comment">«{report.comment}»</blockquote>}
+      <p className="report-card__meta">
+        <Avatar user={report.reporter} size={20} /> Жалоба от{' '}
+        <Link to={`/u/${report.reporter.username}`}>{displayName(report.reporter)}</Link>
+      </p>
+      {report.status !== 'OPEN' && report.resolvedAt && (
+        <p className="report-card__meta muted">
+          {report.status === 'DISMISSED' ? 'Отклонено' : report.kind === 'USER' ? 'Заблокирован' : 'Пин удалён'}{' '}
+          {formatDate(report.resolvedAt)}
+          {report.resolvedBy && <> · {displayName(report.resolvedBy)}</>}
+        </p>
+      )}
+    </>
+  );
+}
+
+function UserReportCard({ report }: { report: AdminReport }) {
+  const resolve = useResolve(report);
+  const [banning, setBanning] = useState(false);
+  const target = report.targetUser;
+  const username = target?.username ?? report.targetUsername ?? '?';
+  const others = target ? target.openReports - (report.status === 'OPEN' ? 1 : 0) : 0;
+  const canBan = target && !target.bannedAt && target.role !== 'ADMIN';
+
+  return (
+    <article className="report-card">
+      <div className="report-card__thumb report-card__thumb--user">
+        <Avatar user={target ?? { id: report.id, username }} size={72} />
+        {!target && <span className="report-card__gone">удалён</span>}
+      </div>
+      <div className="report-card__body">
+        <div className="report-card__top">
+          <span className="chip chip--static">{reasonLabel(report.reason)}</span>
+          <span className="badge">Профиль</span>
+          <span className="muted">{timeAgo(report.createdAt)}</span>
+          {others > 0 && (
+            <span className="badge badge--warn">
+              ещё {others} {plural(others, 'жалоба', 'жалобы', 'жалоб')}
+            </span>
+          )}
+          {target?.bannedAt && <span className="badge badge--danger">Заблокирован</span>}
+        </div>
+        <h3>
+          {target ? (
+            <Link to={`/u/${target.username}`} target="_blank">
+              {displayName(target)}
+            </Link>
+          ) : (
+            `@${username}`
+          )}
+        </h3>
+        {target && (
+          <p className="muted">
+            @{target.username} · {target.pins} {plural(target.pins, 'пин', 'пина', 'пинов')} · с {formatDate(target.createdAt)}
+          </p>
+        )}
+        <ReportFooter report={report} />
+      </div>
+      {report.status === 'OPEN' && (
+        <div className="report-card__actions">
+          {canBan && (
+            <button type="button" className="button button--danger-solid button--sm" onClick={() => setBanning(true)}>
+              Заблокировать
+            </button>
+          )}
+          <button type="button" className="button button--ghost button--sm" disabled={resolve.isPending} onClick={() => resolve.mutate('DISMISS')}>
+            Отклонить
+          </button>
+        </div>
+      )}
+      {banning && target && <BanModal user={target} onClose={() => setBanning(false)} />}
+    </article>
+  );
+}
+
+function ReportCard({ report }: { report: AdminReport }) {
+  if (report.kind === 'USER') return <UserReportCard report={report} />;
+  return <PinReportCard report={report} />;
+}
+
+function PinReportCard({ report }: { report: AdminReport }) {
+  const pin = report.pin;
+  const resolve = useResolve(report);
 
   const title = pin?.title ?? report.pinTitle ?? 'Без названия';
   const others = pin ? pin.openReports - (report.status === 'OPEN' ? 1 : 0) : 0;
@@ -56,17 +144,7 @@ function ReportCard({ report }: { report: AdminReport }) {
             Автор: <Link to={`/u/${pin.author.username}`}>{displayName(pin.author)}</Link>
           </p>
         )}
-        {report.comment && <blockquote className="report-card__comment">«{report.comment}»</blockquote>}
-        <p className="report-card__meta">
-          <Avatar user={report.reporter} size={20} /> Жалоба от{' '}
-          <Link to={`/u/${report.reporter.username}`}>{displayName(report.reporter)}</Link>
-        </p>
-        {report.status !== 'OPEN' && report.resolvedAt && (
-          <p className="report-card__meta muted">
-            {report.status === 'RESOLVED' ? 'Пин удалён' : 'Отклонено'} {formatDate(report.resolvedAt)}
-            {report.resolvedBy && <> · {displayName(report.resolvedBy)}</>}
-          </p>
-        )}
+        <ReportFooter report={report} />
       </div>
       {report.status === 'OPEN' && (
         <div className="report-card__actions">

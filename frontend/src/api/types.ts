@@ -12,17 +12,28 @@ export interface UserStats {
   boards: number;
   followers: number;
   following: number;
+  /** Сколько перцев получили его пины */
+  peppers: number;
+  /** Сколько раз его пины сохранили на доски */
+  saves: number;
 }
 
 export type Role = 'USER' | 'ADMIN';
 
 export interface User extends UserSummary {
   bio?: string;
+  location?: string;
+  website?: string;
   createdAt: string;
   stats: UserStats;
+  /** До пяти самых частых тегов в его пинах */
+  topTags: string[];
   role: Role;
   /** null/отсутствует для гостя и своего профиля */
   followedByMe?: boolean;
+  /** Блокировка — приходит только администраторам */
+  bannedAt?: string;
+  banReason?: string;
 }
 
 export interface AuthResponse {
@@ -120,7 +131,8 @@ export interface BoardInput {
 
 // ------------------------------------------------------------------ жалобы
 
-export type ReportReason = 'SPAM' | 'NSFW' | 'OFFENSIVE' | 'COPYRIGHT' | 'OTHER';
+export type ReportReason = 'SPAM' | 'NSFW' | 'OFFENSIVE' | 'COPYRIGHT' | 'IMPERSONATION' | 'OTHER';
+export type ReportKind = 'PIN' | 'USER';
 export type ReportStatus = 'OPEN' | 'RESOLVED' | 'DISMISSED';
 
 // ------------------------------------------------------------------ админка
@@ -156,6 +168,8 @@ export interface AdminUser {
   bannedAt?: string;
   banReason?: string;
   pins: number;
+  /** Открытые жалобы на профиль */
+  openReports: number;
   createdAt: string;
 }
 
@@ -175,13 +189,17 @@ export interface AdminPin {
 
 export interface AdminReport {
   id: string;
+  kind: ReportKind;
   reason: ReportReason;
   comment?: string;
   status: ReportStatus;
-  /** нет, если пин уже удалён */
+  /** для kind = PIN; нет, если пин уже удалён */
   pin?: AdminPin;
   pinTitle?: string;
-  pinImageUrl: string;
+  pinImageUrl?: string;
+  /** для kind = USER; нет, если аккаунт удалён */
+  targetUser?: AdminUser;
+  targetUsername?: string;
   reporter: UserSummary;
   resolvedBy?: UserSummary;
   resolvedAt?: string;

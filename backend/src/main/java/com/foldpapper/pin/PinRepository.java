@@ -16,7 +16,12 @@ import java.util.UUID;
 
 public interface PinRepository extends JpaRepository<Pin, UUID> {
 
-    long countByAuthorId(UUID authorId);
+    /** Итоги по пинам автора для профиля — одним запросом. */
+    @Query("""
+            SELECT COUNT(p) AS pins, COALESCE(SUM(p.pepperCount), 0L) AS peppers, COALESCE(SUM(p.saveCount), 0L) AS saves
+            FROM Pin p WHERE p.author.id = :authorId
+            """)
+    AuthorTotals totalsByAuthorId(@Param("authorId") UUID authorId);
 
     @EntityGraph(attributePaths = {"author", "tags"})
     Optional<Pin> findWithAuthorAndTagsById(UUID id);
@@ -82,6 +87,14 @@ public interface PinRepository extends JpaRepository<Pin, UUID> {
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Pin p SET p.saveCount = p.saveCount - 1 WHERE p.id = :id AND p.saveCount > 0")
     int decrementSaveCount(@Param("id") UUID id);
+
+    interface AuthorTotals {
+        long getPins();
+
+        long getPeppers();
+
+        long getSaves();
+    }
 
     interface AuthorPinCount {
         UUID getAuthorId();

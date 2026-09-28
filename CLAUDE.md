@@ -62,8 +62,10 @@ Packages under `com.foldpapper` are organized by feature (`user`, `pin`, `board`
 - Login accepts a username or an email.
 
 **Moderation.** The user-facing admin guide (in Russian) is `docs/ADMIN.md`. Keep it in sync when admin behaviour or configuration changes.
-- The `report` package holds pin reports; the unique pair is (pin, reporter).
-- `reports.pin_id` is `ON DELETE SET NULL`. The report keeps a snapshot of the pin's title and image URL, so the moderation history survives pin deletion.
+- The `report` package holds reports on pins (`kind = PIN`, unique pair (pin, reporter)) and on profiles (`kind = USER`, at most one *open* report per (target user, reporter), enforced by a partial unique index).
+- `reports.pin_id` and `reports.target_user_id` are `ON DELETE SET NULL`. The report keeps a snapshot of the pin's title and image URL or the target's username, so the moderation history survives deletion.
+- Profile reports are resolved by banning: `AdminService.updateUser` resolves all open reports on the user when it bans them. `DELETE_PIN` is rejected for profile reports.
+- `UserResponse` carries `bannedAt`/`banReason` only when the viewer is an admin.
 - The `admin` package holds stats, users, pins, and reports.
 - `AdminService.deletePin` resolves all open reports on the pin, then calls `PinService.deleteAsModerator`.
 - Guard rails: an admin can't change their own role or ban themselves, and an admin must be demoted before being banned.

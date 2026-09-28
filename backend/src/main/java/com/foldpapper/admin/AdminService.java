@@ -15,6 +15,7 @@ import com.foldpapper.pin.Pin;
 import com.foldpapper.pin.PinRepository;
 import com.foldpapper.pin.PinService;
 import com.foldpapper.report.Report;
+import com.foldpapper.report.ReportKind;
 import com.foldpapper.report.ReportRepository;
 import com.foldpapper.report.ReportStatus;
 import com.foldpapper.user.Role;
@@ -146,9 +147,12 @@ public class AdminService {
                 PageRequest.of(pageable.getPageNumber(), Math.min(pageable.getPageSize(), 100),
                         Sort.by(Sort.Order.desc("createdAt"))));
 
-        Map<UUID, Long> pinCounts = pinCounts(page.getContent().stream().map(User::getId).toList());
+        List<UUID> ids = page.getContent().stream().map(User::getId).toList();
+        Map<UUID, Long> pinCounts = pinCounts(ids);
+        Map<UUID, Long> reports = openUserReports(ids);
         return PageResponse.of(page, page.getContent().stream()
-                .map(user -> toView(user, pinCounts.getOrDefault(user.getId(), 0L)))
+                .map(user -> toView(user, pinCounts.getOrDefault(user.getId(), 0L),
+                        reports.getOrDefault(user.getId(), 0L)))
                 .toList());
     }
 
@@ -163,12 +167,14 @@ public class AdminService {
         if (update.role() != null) {
             user.setRole(update.role());
         }
+        boolean newlyBanned = false;
         if (Boolean.TRUE.equals(update.banned())) {
             if (user.isAdmin()) {
                 throw ApiException.badRequest("Сначала снимите с пользователя роль администратора");
             }
             if (!user.isBanned()) {
                 user.setBannedAt(Instant.now());
+                newlyBanned = true;
             }
             user.setBanReason(StringUtils.hasText(update.banReason()) ? update.banReason().trim() : null);
         } else if (Boolean.FALSE.equals(update.banned())) {
@@ -178,8 +184,13 @@ public class AdminService {
         if (user.isAdmin() && user.isBanned()) {
             throw ApiException.badRequest("Заблокированный пользователь не может быть администратором");
         }
+        if (newlyBanned) {
+            // блокировка — это и есть решение по жалобам на профиль; после запроса user отсоединён, но уже сохранён
+            reportRepository.resolveOpenForUser(userId, userRepository.getReferenceById(adminId), Instant.now());
+        }
 
-        return toView(user, pinCounts(List.of(userId)).getOrDefault(userId, 0L));
+        return toView(user, pinCounts(List.of(userId)).getOrDefault(userId, 0L),
+                openUserReports(List.of(userId)).getOrDefault(userId, 0L));
     }
 
     private Map<UUID, Long> pinCounts(Collection<UUID> userIds) {
@@ -191,9 +202,18 @@ public class AdminService {
                         PinRepository.AuthorPinCount::getCount));
     }
 
-    private static AdminUserView toView(User user, long pins) {
+    private Map<UUID, Long> openUserReports(Collection<UUID> userIds) {
+        if (userIds.isEmpty()) {
+            return Map.of();
+        }
+        return reportRepository.countOpenByTargetUserIds(userIds).stream()
+                .collect(Collectors.toMap(ReportRepository.UserReportCount::getUserId,
+                        ReportRepository.UserReportCount::getCount));
+    }
+
+    private static AdminUserView toView(User user, long pins, long openReports) {
         return new AdminUserView(user.getId(), user.getUsername(), user.getDisplayName(), user.getEmail(),
-                user.getAvatarUrl(), user.getRole(), user.getBannedAt(), user.getBanReason(), pins,
+                user.getAvatarUrl(), user.getRole(), user.getBannedAt(), user.getBanReason(), pins, openReports,
                 user.getCreatedAt());
     }
 
@@ -249,8 +269,15 @@ public class AdminService {
                 .filter(report -> report.getPin() != null)
                 .map(report -> report.getPin().getId())
                 .collect(Collectors.toSet()));
+        List<UUID> targetIds = page.getContent().stream()
+                .filter(report -> report.getTargetUser() != null)
+                .map(report -> report.getTargetUser().getId())
+                .distinct()
+                .toList();
+        Map<UUID, Long> targetPins = pinCounts(targetIds);
+        Map<UUID, Long> targetReports = openUserReports(targetIds);
         return PageResponse.of(page, page.getContent().stream()
-                .map(report -> toView(report, counts))
+                .map(report -> toView(report, counts, targetPins, targetReports))
                 .toList());
     }
 
@@ -262,6 +289,9 @@ public class AdminService {
             throw ApiException.conflict("Жалоба уже разобрана");
         }
 
+        if (action == ResolveAction.DELETE_PIN && report.getKind() == ReportKind.USER) {
+            throw ApiException.badRequest("Жалобу на профиль закрывает блокировка пользователя");
+        }
         if (action == ResolveAction.DELETE_PIN && report.getPin() != null) {
             deletePin(adminId, report.getPin().getId());
             return;
@@ -272,16 +302,22 @@ public class AdminService {
         report.setResolvedAt(Instant.now());
     }
 
-    private static ReportView toView(Report report, Map<UUID, Long> openCounts) {
+    private static ReportView toView(Report report, Map<UUID, Long> openCounts,
+                                     Map<UUID, Long> targetPins, Map<UUID, Long> targetReports) {
         Pin pin = report.getPin();
+        User target = report.getTargetUser();
         return new ReportView(
                 report.getId(),
+                report.getKind(),
                 report.getReason(),
                 report.getComment(),
                 report.getStatus(),
                 pin == null ? null : toView(pin, openCounts.getOrDefault(pin.getId(), 0L)),
                 report.getPinTitle(),
                 report.getPinImageUrl(),
+                target == null ? null : toView(target, targetPins.getOrDefault(target.getId(), 0L),
+                        targetReports.getOrDefault(target.getId(), 0L)),
+                report.getTargetUsername(),
                 UserService.toSummary(report.getReporter()),
                 report.getResolvedBy() == null ? null : UserService.toSummary(report.getResolvedBy()),
                 report.getResolvedAt(),

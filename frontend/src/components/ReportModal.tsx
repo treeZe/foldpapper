@@ -1,11 +1,13 @@
 import { useState, type FormEvent } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { reportsApi } from '../api/endpoints';
+import { reportsApi, type ReportTarget } from '../api/endpoints';
 import type { ReportReason } from '../api/types';
 import { useToast } from './Toast';
 import { Field, Modal } from './ui';
 
-export const REPORT_REASONS: { value: ReportReason; label: string; hint: string }[] = [
+type ReasonOption = { value: ReportReason; label: string; hint: string };
+
+const PIN_REASONS: ReasonOption[] = [
   { value: 'SPAM', label: 'Спам или реклама', hint: 'Навязчивая реклама, ссылки на сомнительные сайты' },
   { value: 'NSFW', label: 'Контент 18+', hint: 'Откровенные или шокирующие изображения' },
   { value: 'OFFENSIVE', label: 'Оскорбления', hint: 'Травля, язык вражды, угрозы' },
@@ -13,15 +15,25 @@ export const REPORT_REASONS: { value: ReportReason; label: string; hint: string 
   { value: 'OTHER', label: 'Другое', hint: 'Опишите проблему в комментарии' },
 ];
 
-export const reasonLabel = (reason: ReportReason) => REPORT_REASONS.find((r) => r.value === reason)?.label ?? reason;
+// авторские права — про конкретный пин, а не про человека
+const USER_REASONS: ReasonOption[] = [
+  { value: 'SPAM', label: 'Спам или бот', hint: 'Массовая реклама, накрутка, однотипные пины' },
+  { value: 'IMPERSONATION', label: 'Выдаёт себя за другого', hint: 'Чужое имя, фото или бренд' },
+  { value: 'OFFENSIVE', label: 'Оскорбления', hint: 'Травля, язык вражды, угрозы в профиле' },
+  { value: 'NSFW', label: 'Неприемлемый профиль', hint: 'Откровенный аватар или описание' },
+  { value: 'OTHER', label: 'Другое', hint: 'Опишите проблему в комментарии' },
+];
 
-export function ReportModal({ pinId, onClose }: { pinId: string; onClose: () => void }) {
+export const reasonLabel = (reason: ReportReason) =>
+  [...PIN_REASONS, ...USER_REASONS].find((r) => r.value === reason)?.label ?? reason;
+
+export function ReportModal({ target, onClose }: { target: ReportTarget; onClose: () => void }) {
   const toast = useToast();
   const [reason, setReason] = useState<ReportReason | null>(null);
   const [comment, setComment] = useState('');
 
   const mutation = useMutation({
-    mutationFn: () => reportsApi.create(pinId, reason!, comment.trim() || undefined),
+    mutationFn: () => reportsApi.create(target, reason!, comment.trim() || undefined),
     onSuccess: () => {
       toast('Спасибо! Модераторы посмотрят жалобу', 'success');
       onClose();
@@ -34,10 +46,10 @@ export function ReportModal({ pinId, onClose }: { pinId: string; onClose: () => 
   };
 
   return (
-    <Modal title="Пожаловаться на пин" onClose={onClose}>
+    <Modal title={target.kind === 'PIN' ? 'Пожаловаться на пин' : `Пожаловаться на @${target.username}`} onClose={onClose}>
       <form className="form" onSubmit={submit}>
         <div className="reason-list" role="radiogroup" aria-label="Причина жалобы">
-          {REPORT_REASONS.map((item) => (
+          {(target.kind === 'PIN' ? PIN_REASONS : USER_REASONS).map((item) => (
             <label key={item.value} className={`reason${reason === item.value ? ' is-selected' : ''}`}>
               <input
                 type="radio"

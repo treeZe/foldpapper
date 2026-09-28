@@ -1,5 +1,6 @@
 package com.foldpapper.admin;
 
+import com.foldpapper.report.ReportKind;
 import com.foldpapper.report.ReportReason;
 import com.foldpapper.report.ReportStatus;
 import com.foldpapper.user.Role;
@@ -45,6 +46,8 @@ public final class AdminDtos {
             Instant bannedAt,
             String banReason,
             long pins,
+            /** Открытые жалобы на профиль. */
+            long openReports,
             Instant createdAt
     ) {
     }
@@ -74,13 +77,17 @@ public final class AdminDtos {
 
     public record ReportView(
             UUID id,
+            ReportKind kind,
             ReportReason reason,
             String comment,
             ReportStatus status,
-            /** null, если пин уже удалён. */
+            /** Для kind = PIN; null, если пин уже удалён. */
             AdminPinView pin,
             String pinTitle,
             String pinImageUrl,
+            /** Для kind = USER; null, если аккаунт удалён. */
+            AdminUserView targetUser,
+            String targetUsername,
             UserSummary reporter,
             UserSummary resolvedBy,
             Instant resolvedAt,
@@ -88,10 +95,11 @@ public final class AdminDtos {
     ) {
     }
 
+    /** Жалобу на профиль закрывает блокировка через PATCH /admin/users/{id}. */
     public enum ResolveAction {
-        /** Удалить пин и закрыть все жалобы на него. */
+        /** Удалить пин и закрыть все жалобы на него. Только для жалоб на пин. */
         DELETE_PIN,
-        /** Отклонить жалобу, пин оставить. */
+        /** Отклонить жалобу, ничего не менять. */
         DISMISS
     }
 

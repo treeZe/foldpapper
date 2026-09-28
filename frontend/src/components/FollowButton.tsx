@@ -48,7 +48,7 @@ export function FollowButton({ username }: { username: string }) {
   return (
     <button
       type="button"
-      className={`button ${following ? 'button--ghost' : 'button--ink'}`}
+      className={`button ${following ? 'button--ghost' : 'button--outline'}`}
       disabled={mutation.isPending || (!!user && profile.isPending)}
       onClick={() => (user ? mutation.mutate(!following) : navigate('/login'))}
     >

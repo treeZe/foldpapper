@@ -14,7 +14,7 @@ import { ReportModal } from '../components/ReportModal';
 import { SaveToBoardModal } from '../components/SaveToBoardModal';
 import { useToast } from '../components/Toast';
 import { Avatar, ErrorState, Field, Modal, Spinner } from '../components/ui';
-import { averageHeat, HEAT_LEVELS } from '../lib/heat';
+import { averageHeat, HEAT_LEVELS, heatColor } from '../lib/heat';
 import { displayName, formatCount, formatDate, hostOf, parseTags, plural } from '../lib/format';
 
 function EditPinModal({ pin, onClose }: { pin: Pin; onClose: () => void }) {
@@ -183,11 +183,17 @@ export function PinPage() {
           <section className="heat-panel">
             <div className="heat-panel__stats">
               <div>
-                <strong>{formatCount(pin.pepperCount)}</strong>
-                <span>{plural(pin.pepperCount, 'перец', 'перца', 'перцев')}</span>
+                <strong>
+                  <PepperIcon size={20} color={heatColor(heat)} filled={heat > 0} />
+                  {formatCount(pin.heatScore)}
+                </strong>
+                <span>
+                  {plural(pin.heatScore, 'перец', 'перца', 'перцев')} от {formatCount(pin.pepperCount)}{' '}
+                  {plural(pin.pepperCount, 'оценки', 'оценок', 'оценок')}
+                </span>
               </div>
               <div>
-                <strong style={{ color: heat ? HEAT_LEVELS[heat - 1].color : undefined }}>
+                <strong className="heat-panel__level" style={{ color: heat ? HEAT_LEVELS[heat - 1].color : undefined }}>
                   {heat ? HEAT_LEVELS[heat - 1].label : '—'}
                 </strong>
                 <span>средняя острота</span>
@@ -235,7 +241,7 @@ export function PinPage() {
 
       {saving && <SaveToBoardModal pin={pin} onClose={() => setSaving(false)} />}
       {editing && <EditPinModal pin={pin} onClose={() => setEditing(false)} />}
-      {reporting && <ReportModal pinId={pin.id} onClose={() => setReporting(false)} />}
+      {reporting && <ReportModal target={{ kind: 'PIN', pinId: pin.id }} onClose={() => setReporting(false)} />}
     </div>
   );
 }

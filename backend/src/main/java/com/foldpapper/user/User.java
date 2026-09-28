@@ -48,6 +48,13 @@ public class User {
     @Column(name = "avatar_url", length = 1024)
     private String avatarUrl;
 
+    @Column(length = 80)
+    private String location;
+
+    /** Личный сайт; сохраняем только http(s)-ссылки. */
+    @Column(length = 255)
+    private String website;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private Role role = Role.USER;

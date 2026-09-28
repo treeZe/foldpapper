@@ -21,6 +21,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -175,7 +176,93 @@ class AdminApiIntegrationTest {
         mvc.perform(get("/api/v1/pins/" + pinId)).andExpect(status().isNotFound());
     }
 
+    @Test
+    void profileReportIsResolvedByBanAndBanIsVisibleOnlyToAdmins() throws Exception {
+        String admin = registerAdmin("sheriff");
+        String spammer = register("spammer");
+        String witness = register("witness");
+
+        String report = "{\"reason\":\"IMPERSONATION\",\"comment\":\"выдаёт себя за шефа\"}";
+        mvc.perform(auth(post("/api/v1/users/spammer/reports"), spammer)
+                        .contentType(MediaType.APPLICATION_JSON).content(report))
+                .andExpect(status().isBadRequest());
+        mvc.perform(post("/api/v1/users/spammer/reports")
+                        .contentType(MediaType.APPLICATION_JSON).content(report))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(auth(post("/api/v1/users/spammer/reports"), witness)
+                        .contentType(MediaType.APPLICATION_JSON).content(report))
+                .andExpect(status().isCreated());
+        mvc.perform(auth(post("/api/v1/users/spammer/reports"), witness)
+                        .contentType(MediaType.APPLICATION_JSON).content(report))
+                .andExpect(status().isConflict());
+
+        JsonNode open = body(mvc.perform(auth(get("/api/v1/admin/reports"), admin)).andExpect(status().isOk()));
+        JsonNode mine = findUserReport(open.get("items"), "spammer");
+        assertThat(mine.get("kind").asText()).isEqualTo("USER");
+        assertThat(mine.get("targetUser").get("openReports").asLong()).isEqualTo(1);
+        mvc.perform(auth(post("/api/v1/admin/reports/" + mine.get("id").asText() + "/resolve"), admin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"action\":\"DELETE_PIN\"}"))
+                .andExpect(status().isBadRequest());
+
+        banned(admin, "spammer", true, "фейк").andExpect(status().isOk())
+                .andExpect(jsonPath("$.openReports").value(0));
+
+        JsonNode resolved = body(mvc.perform(auth(get("/api/v1/admin/reports").param("status", "RESOLVED"), admin)));
+        assertThat(findUserReport(resolved.get("items"), "spammer").get("resolvedBy").get("username").asText())
+                .isEqualTo("sheriff");
+
+        mvc.perform(auth(get("/api/v1/users/spammer"), admin))
+                .andExpect(jsonPath("$.bannedAt").isNotEmpty())
+                .andExpect(jsonPath("$.banReason").value("фейк"));
+        mvc.perform(auth(get("/api/v1/users/spammer"), witness))
+                .andExpect(jsonPath("$.bannedAt").doesNotExist())
+                .andExpect(jsonPath("$.banReason").doesNotExist());
+    }
+
+    @Test
+    void profileKeepsLocationWebsiteAndReceivedStats() throws Exception {
+        String chef = register("chef");
+        String fan = register("fan");
+
+        mvc.perform(auth(patch("/api/v1/users/me"), chef)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"location\":\"Казань\",\"website\":\"chef.example.com\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.website").value("https://chef.example.com"));
+        mvc.perform(auth(patch("/api/v1/users/me"), chef)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"website\":\"javascript://alert(1)\"}"))
+                .andExpect(status().isBadRequest());
+
+        String pinId = field(mvc.perform(auth(post("/api/v1/pins"), chef)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"imageUrl\":\"https://example.com/c.jpg\",\"tags\":[\"соус\",\"чили\"]}"))
+                .andExpect(status().isCreated()), "id");
+        mvc.perform(auth(put("/api/v1/pins/" + pinId + "/pepper"), fan)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"heat\":4}"))
+                .andExpect(status().isOk());
+
+        mvc.perform(get("/api/v1/users/chef"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.location").value("Казань"))
+                .andExpect(jsonPath("$.stats.pins").value(1))
+                .andExpect(jsonPath("$.stats.peppers").value(1))
+                .andExpect(jsonPath("$.stats.saves").value(0))
+                .andExpect(jsonPath("$.topTags.length()").value(2));
+    }
+
     // ---------------------------------------------------------------- helpers
+
+    private static JsonNode findUserReport(JsonNode reports, String username) {
+        for (JsonNode item : reports) {
+            if ("USER".equals(item.get("kind").asText()) && username.equals(item.get("targetUsername").asText())) {
+                return item;
+            }
+        }
+        throw new AssertionError("Жалоба на профиль " + username + " не найдена");
+    }
 
     private String register(String username) throws Exception {
         String body = "{\"username\":\"%s\",\"email\":\"%s@test.dev\",\"password\":\"password123\"}"

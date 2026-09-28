@@ -10,7 +10,7 @@ function useTheme() {
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     localStorage.setItem('fp-theme', theme);
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#15110e' : '#f5efe4');
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#16110f' : '#fbf6ef');
   }, [theme]);
   return [theme, () => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))] as const;
 }

@@ -22,8 +22,8 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Жалоба пользователя на пин. Пин может быть удалён (БД обнулит pin_id),
- * поэтому название и картинку храним снимком на момент жалобы.
+ * Жалоба на пин или на профиль пользователя. Цель может быть удалена (БД обнулит pin_id
+ * или target_user_id), поэтому название, картинку и username храним снимком на момент жалобы.
  */
 @Entity
 @Table(name = "reports")
@@ -37,9 +37,21 @@ public class Report {
     @UuidGenerator
     private UUID id;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 10)
+    private ReportKind kind = ReportKind.PIN;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pin_id")
     private Pin pin;
+
+    /** Для kind = USER — на кого жалуются. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "target_user_id")
+    private User targetUser;
+
+    @Column(name = "target_username", length = 30)
+    private String targetUsername;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "reporter_id", nullable = false)
@@ -59,7 +71,7 @@ public class Report {
     @Column(name = "pin_title", length = 160)
     private String pinTitle;
 
-    @Column(name = "pin_image_url", nullable = false, length = 1024)
+    @Column(name = "pin_image_url", length = 1024)
     private String pinImageUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)

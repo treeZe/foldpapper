@@ -18,8 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/pins/{pinId}/reports")
-@Tag(name = "Reports", description = "Жалобы на пины")
+@RequestMapping("/api/v1")
+@Tag(name = "Reports", description = "Жалобы на пины и профили")
 public class ReportController {
 
     private final ReportService reportService;
@@ -28,13 +28,22 @@ public class ReportController {
         this.reportService = reportService;
     }
 
-    @PostMapping
+    @PostMapping("/pins/{pinId}/reports")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Пожаловаться на пин")
     public void report(@PathVariable UUID pinId,
                        @AuthenticationPrincipal AppUserPrincipal principal,
                        @Valid @RequestBody ReportRequest request) {
         reportService.report(pinId, principal.getId(), request.reason(), request.comment());
+    }
+
+    @PostMapping("/users/{username}/reports")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Пожаловаться на профиль")
+    public void reportUser(@PathVariable String username,
+                           @AuthenticationPrincipal AppUserPrincipal principal,
+                           @Valid @RequestBody ReportRequest request) {
+        reportService.reportUser(username, principal.getId(), request.reason(), request.comment());
     }
 
     public record ReportRequest(

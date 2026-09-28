@@ -18,6 +18,8 @@ export function SettingsPage() {
   const [displayName, setDisplayName] = useState(me.displayName ?? '');
   const [bio, setBio] = useState(me.bio ?? '');
   const [avatarUrl, setAvatarUrl] = useState(me.avatarUrl ?? '');
+  const [location, setLocation] = useState(me.location ?? '');
+  const [website, setWebsite] = useState(me.website ?? '');
 
   const upload = useMutation({
     mutationFn: (file: File) => mediaApi.upload(file),
@@ -26,9 +28,10 @@ export function SettingsPage() {
   });
 
   const save = useMutation({
-    mutationFn: () => usersApi.updateMe({ displayName, bio, avatarUrl }),
+    mutationFn: () => usersApi.updateMe({ displayName, bio, avatarUrl, location, website }),
     onSuccess: (updated) => {
       setUser(updated);
+      setWebsite(updated.website ?? '');
       queryClient.setQueryData(['user', updated.username.toLowerCase()], updated);
       toast('Профиль сохранён', 'success');
     },
@@ -75,6 +78,20 @@ export function SettingsPage() {
         </Field>
         <Field label="О себе" error={errors.bio} hint={`${bio.length}/500`}>
           <textarea className="input" rows={4} value={bio} maxLength={500} onChange={(e) => setBio(e.target.value)} />
+        </Field>
+        <Field label="Город" error={errors.location}>
+          <input className="input" value={location} maxLength={80} placeholder="Например, Казань" onChange={(e) => setLocation(e.target.value)} />
+        </Field>
+        <Field label="Сайт" error={errors.website} hint="Ссылка появится в профиле">
+          <input
+            className="input"
+            type="text"
+            inputMode="url"
+            value={website}
+            maxLength={255}
+            placeholder="example.com"
+            onChange={(e) => setWebsite(e.target.value)}
+          />
         </Field>
         <Field label="Username">
           <input className="input" value={`@${me.username}`} disabled />

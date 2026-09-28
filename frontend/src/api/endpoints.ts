@@ -31,7 +31,7 @@ export const authApi = {
 
 export const usersApi = {
   me: () => api<User>('/users/me'),
-  updateMe: (body: { displayName?: string; bio?: string; avatarUrl?: string }) =>
+  updateMe: (body: { displayName?: string; bio?: string; avatarUrl?: string; location?: string; website?: string }) =>
     api<User>('/users/me', { method: 'PATCH', body }),
   profile: (username: string) => api<User>(`/users/${encodeURIComponent(username)}`),
   pins: (username: string, page: number) =>
@@ -88,9 +88,14 @@ export const mediaApi = {
   },
 };
 
+export type ReportTarget = { kind: 'PIN'; pinId: string } | { kind: 'USER'; username: string };
+
 export const reportsApi = {
-  create: (pinId: string, reason: ReportReason, comment?: string) =>
-    api<void>(`/pins/${pinId}/reports`, { method: 'POST', body: { reason, comment } }),
+  create: (target: ReportTarget, reason: ReportReason, comment?: string) =>
+    api<void>(
+      target.kind === 'PIN' ? `/pins/${target.pinId}/reports` : `/users/${encodeURIComponent(target.username)}/reports`,
+      { method: 'POST', body: { reason, comment } },
+    ),
 };
 
 export const adminApi = {

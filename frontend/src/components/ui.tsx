@@ -1,9 +1,10 @@
 import { useEffect, useRef, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import type { UserSummary } from '../api/types';
 import { displayName } from '../lib/format';
 import { CloseIcon } from './Icons';
 
-const AVATAR_TONES = ['#e03e2a', '#f08a24', '#2f6b47', '#7a4bd1', '#1f7a8c', '#c23b6b'];
+const AVATAR_TONES = ['#d62d1f', '#f08a24', '#3f7d4f', '#7a4bd1', '#1f7a8c', '#c23b6b'];
 
 export function Avatar({ user, size = 36 }: { user: UserSummary; size?: number }) {
   const name = displayName(user);
@@ -41,10 +42,10 @@ interface ModalProps {
   title: string;
   onClose: () => void;
   children: ReactNode;
-  wide?: boolean;
+  size?: 'compact' | 'wide';
 }
 
-export function Modal({ title, onClose, children, wide }: ModalProps) {
+export function Modal({ title, onClose, children, size }: ModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -53,10 +54,11 @@ export function Modal({ title, onClose, children, wide }: ModalProps) {
     return () => dialog?.close();
   }, []);
 
-  return (
+  // портал в body: иначе окно наследует стили места, где объявлено (например, nowrap ячейки таблицы)
+  return createPortal(
     <dialog
       ref={dialogRef}
-      className={`modal${wide ? ' modal--wide' : ''}`}
+      className={`modal${size ? ` modal--${size}` : ''}`}
       onCancel={(event) => {
         event.preventDefault();
         onClose();
@@ -75,15 +77,20 @@ export function Modal({ title, onClose, children, wide }: ModalProps) {
         </header>
         {children}
       </div>
-    </dialog>
+    </dialog>,
+    document.body,
   );
 }
 
-export function Spinner({ label = 'Загружаем…' }: { label?: string }) {
+/** Загрузка: квадратный лист складывается по диагонали и разворачивается обратно. */
+export function Spinner({ label = 'Складываем перец…' }: { label?: string }) {
   return (
     <div className="spinner" role="status">
-      <span className="spinner__pepper" />
-      <span className="sr-only">{label}</span>
+      <span className="spinner__sheet" aria-hidden>
+        <span className="spinner__half" />
+        <span className="spinner__flap" />
+      </span>
+      <span className="spinner__label">{label}</span>
     </div>
   );
 }
