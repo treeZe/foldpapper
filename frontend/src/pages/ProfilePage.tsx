@@ -105,7 +105,9 @@ export function ProfilePage() {
 
   const person = profile.data;
   const isSelf = user?.id === person.id;
-  const stats = person.stats;
+  // старый бэкенд (не перезапущенный после обновления) этих полей не присылает — страница не должна падать
+  const stats = { ...person.stats, peppers: person.stats.peppers ?? 0, saves: person.stats.saves ?? 0 };
+  const topTags = person.topTags ?? [];
 
   return (
     <div className="page">
@@ -162,9 +164,9 @@ export function ProfilePage() {
             <dd>{formatCount(stats.saves)}</dd>
           </div>
         </dl>
-        {person.topTags.length > 0 && (
+        {topTags.length > 0 && (
           <div className="tag-cloud tag-cloud--wrap profile-head__tags" aria-label="Любимые теги">
-            {person.topTags.map((tag) => (
+            {topTags.map((tag) => (
               <Link key={tag} to={`/search?tag=${encodeURIComponent(tag)}`} className="chip">
                 #{tag}
               </Link>
